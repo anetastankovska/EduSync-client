@@ -1,0 +1,25 @@
+<!-- src/app/navigation/navigation.component.html -->
+<mat-toolbar color="primary" class="topbar">
+  <a class="brand" routerLink="/home">
+    <img src="es-logo.jpg" alt="Logo" class="logo" />
+    <span>Academy Portal</span>
+  </a>
+
+  <span class="spacer"></span>
+
+  <a
+    mat-button
+    routerLink="/home"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ exact: true }"
+    >Home</a
+  >
+
+  <a mat-button routerLink="/programs" routerLinkActive="active">Programs</a>
+  <a mat-button routerLink="/register" routerLinkActive="active">Register</a>
+
+  <a mat-stroked-button color="accent" routerLink="/login">
+    <mat-icon>login</mat-icon>
+    Login
+  </a>
+</mat-toolbar>

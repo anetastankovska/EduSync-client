@@ -1,0 +1,184 @@
+<!-- Hero -->
+<section class="hero">
+  <div class="hero__copy">
+    <h1>Learn by building.<br />Grow with mentors.</h1>
+    <p>
+      Welcome to our training hub—practice-driven programs, expert guidance, and
+      a supportive community to launch or level up your tech career.
+    </p>
+
+    <div class="hero__badges">
+      <mat-chip-listbox>
+        <mat-chip selectable="false">Mentor-led</mat-chip>
+        <mat-chip selectable="false">Project-first</mat-chip>
+        <mat-chip selectable="false">Career-oriented</mat-chip>
+      </mat-chip-listbox>
+    </div>
+
+    <div class="hero__actions">
+      <a mat-flat-button color="primary" routerLink="/register">
+        <mat-icon>rocket_launch</mat-icon>
+        Get started
+      </a>
+      <a mat-stroked-button color="primary" routerLink="/programs">
+        <mat-icon>explore</mat-icon>
+        Browse programs
+      </a>
+    </div>
+  </div>
+
+  <div class="hero__media">
+    <img src="students.jpg" alt="Students collaborating" />
+  </div>
+</section>
+
+<!-- Highlights -->
+<section class="highlights">
+  <div class="grid">
+    <mat-card>
+      <mat-card-header>
+        <div mat-card-avatar class="icon"><mat-icon>school</mat-icon></div>
+        <mat-card-title>Practice-based learning</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Hands-on projects guided by mentors to build job-ready skills.</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <a mat-button color="primary" routerLink="/navigation">
+          Explore programs <mat-icon>arrow_forward</mat-icon>
+        </a>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header>
+        <div mat-card-avatar class="icon"><mat-icon>groups</mat-icon></div>
+        <mat-card-title>Expert mentors</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>
+          Learn from active industry professionals and get actionable feedback.
+        </p>
+      </mat-card-content>
+      <mat-card-actions>
+        <a mat-button color="primary" routerLink="/register">
+          Join a cohort <mat-icon>arrow_forward</mat-icon>
+        </a>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header>
+        <div mat-card-avatar class="icon">
+          <mat-icon>workspace_premium</mat-icon>
+        </div>
+        <mat-card-title>Career support</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Interview prep, portfolio reviews, and real-world best practices.</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <a mat-button color="primary" routerLink="/login">
+          Sign in <mat-icon>arrow_forward</mat-icon>
+        </a>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</section>
+
+<!-- Programs -->
+<section class="programs">
+  <h2>Popular programs</h2>
+  <div class="grid">
+    <mat-card class="program">
+      <mat-card-header>
+        <div mat-card-avatar class="icon"><mat-icon>code</mat-icon></div>
+        <mat-card-title>Frontend Development</mat-card-title>
+        <mat-card-subtitle
+          >Angular, TypeScript, modern tooling.</mat-card-subtitle
+        >
+      </mat-card-header>
+      <mat-card-actions>
+        <a mat-button color="primary" routerLink="/programs"
+          >Learn more <mat-icon>open_in_new</mat-icon></a
+        >
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="program">
+      <mat-card-header>
+        <div mat-card-avatar class="icon"><mat-icon>dns</mat-icon></div>
+        <mat-card-title>Backend & APIs</mat-card-title>
+        <mat-card-subtitle
+          >Node.js, NestJS, databases, testing.</mat-card-subtitle
+        >
+      </mat-card-header>
+      <mat-card-actions>
+        <a mat-button color="primary" routerLink="/programs"
+          >Learn more <mat-icon>open_in_new</mat-icon></a
+        >
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="program">
+      <mat-card-header>
+        <div mat-card-avatar class="icon"><mat-icon>bug_report</mat-icon></div>
+        <mat-card-title>QA & Testing</mat-card-title>
+        <mat-card-subtitle
+          >Manual & automated testing foundations.</mat-card-subtitle
+        >
+      </mat-card-header>
+      <mat-card-actions>
+        <a mat-button color="primary" routerLink="/programs"
+          >Learn more <mat-icon>open_in_new</mat-icon></a
+        >
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="program">
+      <mat-card-header>
+        <div mat-card-avatar class="icon"><mat-icon>hub</mat-icon></div>
+        <mat-card-title>Data & Cloud Basics</mat-card-title>
+        <mat-card-subtitle
+          >Data workflows, CI/CD, containers.</mat-card-subtitle
+        >
+      </mat-card-header>
+      <mat-card-actions>
+        <a mat-button color="primary" routerLink="/programs"
+          >Learn more <mat-icon>open_in_new</mat-icon></a
+        >
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <mat-card>
+    <mat-card-title>Ready to start?</mat-card-title>
+    <mat-card-content
+      >Join a cohort and learn the skills companies look for.</mat-card-content
+    >
+    <mat-card-actions>
+      <a mat-flat-button color="primary" routerLink="/register">Register</a>
+      <a mat-stroked-button color="primary" routerLink="/login"
+        >I already have an account</a
+      >
+    </mat-card-actions>
+  </mat-card>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer__inner">
+    <div class="brand">
+      <img src="assets/logo.svg" alt="Logo" class="logo" />
+      <strong>Academy Portal</strong>
+    </div>
+    <nav class="links">
+      <a routerLink="/navigation">Programs</a>
+      <a routerLink="/home">About</a>
+      <a routerLink="/home">Contact</a>
+    </nav>
+  </div>
+</footer>

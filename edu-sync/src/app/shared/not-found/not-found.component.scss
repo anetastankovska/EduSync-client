@@ -1,0 +1,29 @@
+.not-found-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  color: #1976d2; // Azure Blue primary
+
+  .icon {
+    font-size: 80px;
+    color: #0288d1; // Lighter azure accent
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    margin: 0.5rem 0;
+  }
+
+  p {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  button {
+    padding: 0.5rem 2rem;
+  }
+}

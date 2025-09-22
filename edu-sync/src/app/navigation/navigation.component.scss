@@ -1,0 +1,27 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    font-weight: 600;
+  }
+
+  .logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+  }
+  .spacer {
+    flex: 1 1 auto;
+  }
+
+  a.active {
+    font-weight: 700;
+  }
+}

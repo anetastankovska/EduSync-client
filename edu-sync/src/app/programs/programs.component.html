@@ -1,0 +1,62 @@
+<section class="page-head">
+  <h1>Programs</h1>
+  <p>
+    Choose a learning path that matches your goals. Each program blends theory
+    with hands-on projects and mentor feedback.
+  </p>
+</section>
+
+<section class="grid">
+  <mat-card class="program" *ngFor="let p of programs" [attr.id]="p.id">
+    <mat-card-header>
+      <div mat-card-avatar class="icon">
+        <mat-icon>{{ p.icon }}</mat-icon>
+      </div>
+      <mat-card-title>{{ p.title }}</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <p class="desc">{{ p.description }}</p>
+
+      <mat-divider></mat-divider>
+
+      <div class="topics">
+        <span class="label">You’ll cover:</span>
+        <mat-chip-listbox>
+          <mat-chip *ngFor="let t of p.topics" selectable="false">{{
+            t
+          }}</mat-chip>
+        </mat-chip-listbox>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <a mat-stroked-button color="primary" routerLink="/login"
+        >I’m already a student</a
+      >
+      <a
+        *ngIf="p.cta"
+        mat-flat-button
+        color="primary"
+        [routerLink]="p.cta.link"
+      >
+        {{ p.cta.text }}
+      </a>
+    </mat-card-actions>
+  </mat-card>
+</section>
+
+<section class="cta">
+  <mat-card>
+    <mat-card-title>Need help choosing?</mat-card-title>
+    <mat-card-content>
+      Tell us your goals and background—we’ll recommend a program that fits.
+    </mat-card-content>
+    <mat-card-actions>
+      <a mat-flat-button color="primary" routerLink="/register">Get guidance</a>
+      <a mat-stroked-button color="primary" routerLink="/navigation"
+        >Browse all again</a
+      >
+    </mat-card-actions>
+  </mat-card>
+</section>
