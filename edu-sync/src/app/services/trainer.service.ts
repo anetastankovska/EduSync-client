@@ -29,4 +29,11 @@ export class TrainerApi {
   updateMe(body: any) {
     return this.http.patch<any>(`${BASE}/trainer/me`, body);
   }
+
+  updateAcademy(id: number, academyId: number) {
+    return this.http.patch(`${BASE}/trainer/${id}/academy`, { academyId });
+  }
+  setSubjects(id: number, subjectIds: number[]) {
+    return this.http.put(`${BASE}/trainer/${id}/subjects`, { subjectIds });
+  }
 }

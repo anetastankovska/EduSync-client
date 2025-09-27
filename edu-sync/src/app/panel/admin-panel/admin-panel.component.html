@@ -1,11 +1,5 @@
-<!-- src/app/panel/admin-panel.component.html -->
 <mat-card>
   <h2>Admin Panel</h2>
-
-  <!-- <div class="alerts">
-    <mat-card *ngIf="errorMsg()" class="error">{{ errorMsg() }}</mat-card>
-    <mat-card *ngIf="successMsg()" class="success">{{ successMsg() }}</mat-card>
-  </div> -->
 
   <!-- CREATE ACADEMY -->
   <section class="section">
@@ -111,7 +105,7 @@
 
   <mat-divider class="sep"></mat-divider>
 
-  <!-- LISTS -->
+  <!-- ACADEMIES LIST -->
   <section class="section">
     <h3>Academies</h3>
     <mat-list>
@@ -130,6 +124,7 @@
     </mat-list>
   </section>
 
+  <!-- SUBJECTS LIST -->
   <section class="section">
     <h3>Subjects</h3>
     <mat-list>
@@ -152,14 +147,50 @@
     </mat-list>
   </section>
 
+  <!-- TRAINERS LIST + ASSIGNMENT -->
   <section class="section">
     <h3>Trainers</h3>
     <mat-list>
       <mat-list-item *ngFor="let t of trainers">
-        <div matListItemTitle>{{ t.name }}</div>
+        <div matListItemTitle>{{ t.name || "—" }}</div>
         <div matListItemLine>
-          {{ t.email }} — Age {{ t.age }} — Academy #{{ t.academyId }}
+          {{ t.email }} — Age {{ t.age || "—" }} — Academy #{{
+            t.academyId || "—"
+          }}
         </div>
+
+        <!-- Assign Academy -->
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Academy</mat-label>
+          <mat-select
+            [value]="t.academyId ?? null"
+            (selectionChange)="onSetTrainerAcademy(t, $event.value)"
+          >
+            <mat-option [value]="null">— None —</mat-option>
+            <mat-option *ngFor="let a of academies" [value]="a.id">
+              {{ a.name }} (ID {{ a.id }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Assign Subjects -->
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Subjects</mat-label>
+          <mat-select
+            multiple
+            [disabled]="!t.academyId"
+            [value]="t.subjectIds || []"
+            (selectionChange)="onSetTrainerSubjects(t, $event.value)"
+          >
+            <mat-option
+              *ngFor="let sub of subjectsForAcademy(t.academyId)"
+              [value]="sub.id"
+            >
+              {{ sub.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
         <button
           mat-icon-button
           color="warn"
@@ -172,14 +203,50 @@
     </mat-list>
   </section>
 
+  <!-- STUDENTS LIST + ASSIGNMENT -->
   <section class="section">
     <h3>Students</h3>
     <mat-list>
       <mat-list-item *ngFor="let s of students">
-        <div matListItemTitle>{{ s.name }}</div>
+        <div matListItemTitle>{{ s.name || "—" }}</div>
         <div matListItemLine>
-          {{ s.email }} — Age {{ s.age }} — Academy #{{ s.academyId }}
+          {{ s.email }} — Age {{ s.age || "—" }} — Academy #{{
+            s.academyId || "—"
+          }}
         </div>
+
+        <!-- Assign Academy -->
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Academy</mat-label>
+          <mat-select
+            [value]="s.academyId ?? null"
+            (selectionChange)="onSetStudentAcademy(s, $event.value)"
+          >
+            <mat-option [value]="null">— None —</mat-option>
+            <mat-option *ngFor="let a of academies" [value]="a.id">
+              {{ a.name }} (ID {{ a.id }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Assign Subjects -->
+        <mat-form-field appearance="outline" class="inline-field">
+          <mat-label>Subjects</mat-label>
+          <mat-select
+            multiple
+            [disabled]="!s.academyId"
+            [value]="s.subjectIds || []"
+            (selectionChange)="onSetStudentSubjects(s, $event.value)"
+          >
+            <mat-option
+              *ngFor="let sub of subjectsForAcademy(s.academyId)"
+              [value]="sub.id"
+            >
+              {{ sub.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
         <button
           mat-icon-button
           color="warn"

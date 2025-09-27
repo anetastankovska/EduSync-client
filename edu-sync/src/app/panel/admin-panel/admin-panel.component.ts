@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-// Material Modules
+// Material
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -14,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
 
+// APIs & utils
 import { AcademyApi } from '../../services/academy.service';
 import { StudentApi } from '../../services/student.service';
 import { SubjectApi } from '../../services/subject.service';
@@ -26,6 +27,7 @@ import { dstr, num } from '../../util/util';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    // Material
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -47,17 +49,19 @@ export class AdminPanelComponent implements OnInit {
   private trainerApi = inject(TrainerApi);
   private studentApi = inject(StudentApi);
 
+  // UI state
   loading = signal(true);
   saving = signal(false);
   errorMsg = signal<string | null>(null);
   successMsg = signal<string | null>(null);
 
+  // Data
   academies: any[] = [];
   subjects: any[] = [];
   trainers: any[] = [];
   students: any[] = [];
 
-  // ----- Create Academy form -----
+  // Create Academy form
   createAcademyForm = this.fb.group({
     name: ['', [Validators.required]],
     description: ['', [Validators.required]],
@@ -66,7 +70,7 @@ export class AdminPanelComponent implements OnInit {
     price: [0, [Validators.required, Validators.min(0)]],
   });
 
-  // ----- Create Subject form -----
+  // Create Subject form
   difficultyOptions = ['easy', 'medium', 'hard'];
   createSubjectForm = this.fb.group({
     name: ['', [Validators.required]],
@@ -84,7 +88,6 @@ export class AdminPanelComponent implements OnInit {
     this.errorMsg.set(null);
     this.successMsg.set(null);
 
-    // Load all data in parallel
     Promise.all([
       this.academyApi
         .getAll()
@@ -97,19 +100,36 @@ export class AdminPanelComponent implements OnInit {
       this.trainerApi
         .getAll()
         .toPromise()
-        .then((x) => (this.trainers = x ?? [])),
+        .then((x: any[] | undefined) => {
+          this.trainers =
+            (x ?? []).map((t) => ({
+              ...t,
+              // normalize subjects → subjectIds for the UI
+              subjectIds: Array.isArray(t.subjects)
+                ? t.subjects.map((s: any) => s.id)
+                : t.subjectIds ?? [],
+            })) ?? [];
+        }),
       this.studentApi
         .getAll()
         .toPromise()
-        .then((x) => (this.students = x ?? [])),
+        .then((x: any[] | undefined) => {
+          this.students =
+            (x ?? []).map((s) => ({
+              ...s,
+              subjectIds: Array.isArray(s.subjects)
+                ? s.subjects.map((sub: any) => sub.id)
+                : s.subjectIds ?? [],
+            })) ?? [];
+        }),
     ])
-      .catch((err) => {
-        this.errorMsg.set(err?.error?.message ?? 'Failed to load data.');
-      })
+      .catch((err) =>
+        this.errorMsg.set(err?.error?.message ?? 'Failed to load data.')
+      )
       .finally(() => this.loading.set(false));
   }
 
-  // ------- Create Academy -------
+  // ---------- Create Academy ----------
   createAcademy(): void {
     if (this.createAcademyForm.invalid) {
       this.createAcademyForm.markAllAsTouched();
@@ -121,8 +141,8 @@ export class AdminPanelComponent implements OnInit {
     const payload = {
       name: v.name ?? '',
       description: v.description ?? '',
-      startDate: dstr(v.startDate), // "YYYY-MM-DD"
-      endDate: dstr(v.endDate), // "YYYY-MM-DD"
+      startDate: dstr(v.startDate),
+      endDate: dstr(v.endDate),
       price: num(v.price),
     };
 
@@ -152,15 +172,13 @@ export class AdminPanelComponent implements OnInit {
   deleteAcademy(id: number): void {
     if (!confirm('Delete academy?')) return;
     this.academyApi.delete(id).subscribe({
-      next: () => {
-        this.academies = this.academies.filter((a) => a.id !== id);
-      },
+      next: () => (this.academies = this.academies.filter((a) => a.id !== id)),
       error: (err) =>
         this.errorMsg.set(err?.error?.message ?? 'Failed to delete academy.'),
     });
   }
 
-  // ------- Create Subject -------
+  // ---------- Create Subject ----------
   createSubject(): void {
     if (this.createSubjectForm.invalid) {
       this.createSubjectForm.markAllAsTouched();
@@ -207,7 +225,7 @@ export class AdminPanelComponent implements OnInit {
     });
   }
 
-  // ------- Delete Trainer / Student -------
+  // ---------- Delete people ----------
   deleteTrainer(id: number): void {
     if (!confirm('Delete trainer?')) return;
     this.trainerApi.delete(id).subscribe({
@@ -226,11 +244,57 @@ export class AdminPanelComponent implements OnInit {
     });
   }
 
-  // helpers
-  private toIsoDate(d: Date): string {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
+  // ---------- Assignment helpers ----------
+  subjectsForAcademy(academyId?: number | null) {
+    if (!academyId) return [];
+    return this.subjects.filter((s) => s.academyId === academyId);
+  }
+
+  onSetTrainerAcademy(t: any, academyId: number | null) {
+    this.trainerApi.updateAcademy(t.id, academyId as any).subscribe({
+      next: () => {
+        t.academyId = academyId;
+        t.subjectIds = []; // clear when academy changes
+      },
+      error: (err) =>
+        this.errorMsg.set(
+          err?.error?.message ?? 'Failed to set trainer academy.'
+        ),
+    });
+  }
+
+  onSetTrainerSubjects(t: any, subjectIds: number[]) {
+    if (!t.academyId) return;
+    this.trainerApi.setSubjects(t.id, subjectIds).subscribe({
+      next: () => (t.subjectIds = subjectIds),
+      error: (err) =>
+        this.errorMsg.set(
+          err?.error?.message ?? 'Failed to set trainer subjects.'
+        ),
+    });
+  }
+
+  onSetStudentAcademy(s: any, academyId: number | null) {
+    this.studentApi.updateAcademy(s.id, academyId as any).subscribe({
+      next: () => {
+        s.academyId = academyId;
+        s.subjectIds = [];
+      },
+      error: (err) =>
+        this.errorMsg.set(
+          err?.error?.message ?? 'Failed to set student academy.'
+        ),
+    });
+  }
+
+  onSetStudentSubjects(s: any, subjectIds: number[]) {
+    if (!s.academyId) return;
+    this.studentApi.setSubjects(s.id, subjectIds).subscribe({
+      next: () => (s.subjectIds = subjectIds),
+      error: (err) =>
+        this.errorMsg.set(
+          err?.error?.message ?? 'Failed to set student subjects.'
+        ),
+    });
   }
 }

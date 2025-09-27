@@ -30,4 +30,10 @@ export class StudentApi {
   updateMe(body: any) {
     return this.http.patch<any>(`${BASE}/student/me`, body);
   }
+  updateAcademy(id: number, academyId: number) {
+    return this.http.patch(`${BASE}/student/${id}/academy`, { academyId });
+  }
+  setSubjects(id: number, subjectIds: number[]) {
+    return this.http.put(`${BASE}/student/${id}/subjects`, { subjectIds });
+  }
 }
