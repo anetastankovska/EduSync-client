@@ -77,9 +77,9 @@
       <mat-form-field appearance="outline">
         <mat-label>Difficulty</mat-label>
         <mat-select formControlName="difficulty">
-          <mat-option *ngFor="let d of difficultyOptions" [value]="d">{{
-            d
-          }}</mat-option>
+          <mat-option *ngFor="let d of difficultyOptions" [value]="d">
+            {{ d }}
+          </mat-option>
         </mat-select>
       </mat-form-field>
 
@@ -90,6 +90,18 @@
             {{ a.name }} (ID {{ a.id }})
           </mat-option>
         </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Trainer</mat-label>
+        <mat-select formControlName="trainerId">
+          <mat-option *ngFor="let t of trainerOptionsForSubject" [value]="t.id">
+            {{ t.name }} — Academy #{{ t.academyId }}
+          </mat-option>
+        </mat-select>
+        <mat-hint *ngIf="!createSubjectForm.value.academyId">
+          Select an academy first
+        </mat-hint>
       </mat-form-field>
 
       <button
@@ -110,16 +122,18 @@
     <h3>Academies</h3>
     <mat-list>
       <mat-list-item *ngFor="let a of academies">
+        <span matListItemIcon class="start-icon">
+          <button
+            mat-icon-button
+            color="warn"
+            (click)="deleteAcademy(a.id)"
+            aria-label="Delete"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </span>
         <div matListItemTitle>{{ a.name }}</div>
         <div matListItemLine>{{ a.description }}</div>
-        <button
-          mat-icon-button
-          color="warn"
-          (click)="deleteAcademy(a.id)"
-          aria-label="Delete"
-        >
-          <mat-icon>delete</mat-icon>
-        </button>
       </mat-list-item>
     </mat-list>
   </section>
@@ -129,132 +143,75 @@
     <h3>Subjects</h3>
     <mat-list>
       <mat-list-item *ngFor="let s of subjects">
+        <span matListItemIcon class="start-icon">
+          <button
+            mat-icon-button
+            color="warn"
+            (click)="deleteSubject(s.id)"
+            aria-label="Delete"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </span>
         <div matListItemTitle>{{ s.name }}</div>
         <div matListItemLine>
-          {{ s.numberOfClasses }} classes — {{ s.difficulty }} — Academy #{{
-            s.academyId
-          }}
+          {{ s.numberOfClasses }} classes — {{ s.difficulty }} — Academy
+          {{ academyName(s.academyId) }}
         </div>
-        <button
-          mat-icon-button
-          color="warn"
-          (click)="deleteSubject(s.id)"
-          aria-label="Delete"
-        >
-          <mat-icon>delete</mat-icon>
-        </button>
       </mat-list-item>
     </mat-list>
   </section>
 
-  <!-- TRAINERS LIST + ASSIGNMENT -->
+  <!-- TRAINERS LIST -->
   <section class="section">
     <h3>Trainers</h3>
     <mat-list>
       <mat-list-item *ngFor="let t of trainers">
+        <span matListItemIcon class="start-icon">
+          <button
+            mat-icon-button
+            color="warn"
+            (click)="deleteTrainer(t.id)"
+            aria-label="Delete"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </span>
+
         <div matListItemTitle>{{ t.name || "—" }}</div>
+
+        <!-- line 1: email & academy -->
         <div matListItemLine>
-          {{ t.email }} — Age {{ t.age || "—" }} — Academy #{{
-            t.academyId || "—"
-          }}
+          {{ t.email }} — Academy {{ academyName(t.academyId) }}
         </div>
 
-        <!-- Assign Academy -->
-        <mat-form-field appearance="outline" class="inline-field">
-          <mat-label>Academy</mat-label>
-          <mat-select
-            [value]="t.academyId ?? null"
-            (selectionChange)="onSetTrainerAcademy(t, $event.value)"
-          >
-            <mat-option [value]="null">— None —</mat-option>
-            <mat-option *ngFor="let a of academies" [value]="a.id">
-              {{ a.name }} (ID {{ a.id }})
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <!-- Assign Subjects -->
-        <mat-form-field appearance="outline" class="inline-field">
-          <mat-label>Subjects</mat-label>
-          <mat-select
-            multiple
-            [disabled]="!t.academyId"
-            [value]="t.subjectIds || []"
-            (selectionChange)="onSetTrainerSubjects(t, $event.value)"
-          >
-            <mat-option
-              *ngFor="let sub of subjectsForAcademy(t.academyId)"
-              [value]="sub.id"
-            >
-              {{ sub.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <button
-          mat-icon-button
-          color="warn"
-          (click)="deleteTrainer(t.id)"
-          aria-label="Delete"
-        >
-          <mat-icon>delete</mat-icon>
-        </button>
+        <!-- line 2: subjects -->
+        <div matListItemLine>
+          Subjects: {{ trainerSubjectNames(t).join(", ") || "—" }}
+        </div>
       </mat-list-item>
     </mat-list>
   </section>
 
-  <!-- STUDENTS LIST + ASSIGNMENT -->
+  <!-- STUDENTS LIST -->
   <section class="section">
     <h3>Students</h3>
     <mat-list>
       <mat-list-item *ngFor="let s of students">
+        <span matListItemIcon class="start-icon">
+          <button
+            mat-icon-button
+            color="warn"
+            (click)="deleteStudent(s.id)"
+            aria-label="Delete"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </span>
         <div matListItemTitle>{{ s.name || "—" }}</div>
         <div matListItemLine>
-          {{ s.email }} — Age {{ s.age || "—" }} — Academy #{{
-            s.academyId || "—"
-          }}
+          {{ s.email }} — Academy {{ academyName(s.academyId) }}
         </div>
-
-        <!-- Assign Academy -->
-        <mat-form-field appearance="outline" class="inline-field">
-          <mat-label>Academy</mat-label>
-          <mat-select
-            [value]="s.academyId ?? null"
-            (selectionChange)="onSetStudentAcademy(s, $event.value)"
-          >
-            <mat-option [value]="null">— None —</mat-option>
-            <mat-option *ngFor="let a of academies" [value]="a.id">
-              {{ a.name }} (ID {{ a.id }})
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <!-- Assign Subjects -->
-        <mat-form-field appearance="outline" class="inline-field">
-          <mat-label>Subjects</mat-label>
-          <mat-select
-            multiple
-            [disabled]="!s.academyId"
-            [value]="s.subjectIds || []"
-            (selectionChange)="onSetStudentSubjects(s, $event.value)"
-          >
-            <mat-option
-              *ngFor="let sub of subjectsForAcademy(s.academyId)"
-              [value]="sub.id"
-            >
-              {{ sub.name }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <button
-          mat-icon-button
-          color="warn"
-          (click)="deleteStudent(s.id)"
-          aria-label="Delete"
-        >
-          <mat-icon>delete</mat-icon>
-        </button>
       </mat-list-item>
     </mat-list>
   </section>

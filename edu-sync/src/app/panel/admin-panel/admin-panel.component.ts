@@ -14,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; // <-- add
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 // APIs & utils
 import { AcademyApi } from '../../services/academy.service';
@@ -40,7 +40,7 @@ import { dstr, num } from '../../util/util';
     MatIconModule,
     MatDividerModule,
     MatListModule,
-    MatSnackBarModule, // <-- add
+    MatSnackBarModule,
   ],
   templateUrl: './admin-panel.component.html',
   styleUrls: ['./admin-panel.component.scss'],
@@ -51,7 +51,7 @@ export class AdminPanelComponent implements OnInit {
   private subjectApi = inject(SubjectApi);
   private trainerApi = inject(TrainerApi);
   private studentApi = inject(StudentApi);
-  private snack = inject(MatSnackBar); // <-- add
+  private snack = inject(MatSnackBar);
 
   // UI state
   loading = signal(true);
@@ -62,6 +62,7 @@ export class AdminPanelComponent implements OnInit {
   subjects: any[] = [];
   trainers: any[] = [];
   students: any[] = [];
+  trainerOptionsForSubject: any[] = [];
 
   // Create Academy form
   createAcademyForm = this.fb.group({
@@ -79,10 +80,28 @@ export class AdminPanelComponent implements OnInit {
     numberOfClasses: [1, [Validators.required, Validators.min(0)]],
     difficulty: ['', [Validators.required]],
     academyId: [null as number | null, [Validators.required]],
+    trainerId: [null as number | null, [Validators.required]], // required
   });
 
   ngOnInit(): void {
     this.refreshAll();
+
+    // When academy changes in the subject form, filter trainers for that academy
+    this.createSubjectForm.get('academyId')!.valueChanges.subscribe((aid) => {
+      const academyId = Number(aid) || null;
+      this.trainerOptionsForSubject = academyId
+        ? this.trainers.filter((t) => t.academyId === academyId)
+        : [];
+      // force re-pick trainer when academy changes
+      this.createSubjectForm.get('trainerId')!.reset(null);
+      // enable/disable trainer select
+      const ctrl = this.createSubjectForm.get('trainerId')!;
+      academyId
+        ? ctrl.enable({ emitEvent: false })
+        : ctrl.disable({ emitEvent: false });
+    });
+    // disable trainer until academy chosen
+    this.createSubjectForm.get('trainerId')!.disable({ emitEvent: false });
   }
 
   refreshAll(): void {
@@ -189,6 +208,7 @@ export class AdminPanelComponent implements OnInit {
       numberOfClasses: num(v.numberOfClasses),
       difficulty: (v.difficulty ?? '') as string,
       academyId: num(v.academyId),
+      trainerId: num(v.trainerId),
     };
 
     this.subjectApi.create(payload).subscribe({
@@ -200,7 +220,11 @@ export class AdminPanelComponent implements OnInit {
           numberOfClasses: 1,
           difficulty: '',
           academyId: null,
+          trainerId: null,
         });
+        // trainer select disabled until an academy is re-picked
+        this.createSubjectForm.get('trainerId')!.disable({ emitEvent: false });
+        this.trainerOptionsForSubject = [];
         this.createSubjectForm.markAsPristine();
         this.createSubjectForm.markAsUntouched();
         this.createSubjectForm.updateValueAndValidity();
@@ -241,71 +265,25 @@ export class AdminPanelComponent implements OnInit {
     });
   }
 
-  // ---------- Assignment helpers ----------
-  subjectsForAcademy(academyId?: number | null) {
-    if (!academyId) return [];
-    return this.subjects.filter((s) => s.academyId === academyId);
+  // ---------- Display helpers (for read-only trainer/student sections) ----------
+  /** Get academy name by id (fallback to '#id' if not found) */
+  academyName(id?: number | null): string {
+    if (!id) return '—';
+    // fast path via map, fallback to find just in case
+    const map = this.academyNameMap();
+    return map[id] ?? this.academies.find((a) => a.id === id)?.name ?? '—';
   }
 
-  onSetTrainerAcademy(t: any, academyId: number | null) {
-    this.trainerApi.updateAcademy(t.id, academyId as any).subscribe({
-      next: () => {
-        t.academyId = academyId;
-        t.subjectIds = []; // clear when academy changes
-        this.toast('Trainer academy updated.');
-      },
-      error: (err) =>
-        this.toast(
-          err?.error?.message ?? 'Failed to set trainer academy.',
-          'error'
-        ),
-    });
-  }
-
-  onSetTrainerSubjects(t: any, subjectIds: number[]) {
-    if (!t.academyId) return;
-    this.trainerApi.setSubjects(t.id, subjectIds).subscribe({
-      next: () => {
-        t.subjectIds = subjectIds;
-        this.toast('Trainer subjects updated.');
-      },
-      error: (err) =>
-        this.toast(
-          err?.error?.message ?? 'Failed to set trainer subjects.',
-          'error'
-        ),
-    });
-  }
-
-  onSetStudentAcademy(s: any, academyId: number | null) {
-    this.studentApi.updateAcademy(s.id, academyId as any).subscribe({
-      next: () => {
-        s.academyId = academyId;
-        s.subjectIds = [];
-        this.toast('Student academy updated.');
-      },
-      error: (err) =>
-        this.toast(
-          err?.error?.message ?? 'Failed to set student academy.',
-          'error'
-        ),
-    });
-  }
-
-  onSetStudentSubjects(s: any, subjectIds: number[]) {
-    if (!s.academyId) return;
-    this.studentApi.setSubjects(s.id, subjectIds).subscribe({
-      next: () => {
-        s.subjectIds = subjectIds;
-        this.toast('Student subjects updated.');
-      },
-      error: (err) =>
-        this.toast(
-          err?.error?.message ?? 'Failed to set student subjects.',
-          'error'
-        ),
-    });
-  }
+  /**
+   * Subjects taught by a trainer.
+   * Prefer t.subjects if API returns relation; otherwise compute from global subjects (subject.trainerId).
+   */
+  trainerSubjectNames = (t: any): string[] => {
+    if (Array.isArray(t?.subjects) && t.subjects.length) {
+      return t.subjects.map((s: any) => s.name);
+    }
+    return this.subjects.filter((s) => s.trainerId === t.id).map((s) => s.name);
+  };
 
   // snack helper
   private toast(
@@ -319,5 +297,9 @@ export class AdminPanelComponent implements OnInit {
       verticalPosition: 'bottom',
       panelClass: type === 'success' ? ['snack-success'] : ['snack-error'],
     });
+  }
+
+  private academyNameMap(): Record<number, string> {
+    return Object.fromEntries(this.academies.map((a) => [a.id, a.name]));
   }
 }

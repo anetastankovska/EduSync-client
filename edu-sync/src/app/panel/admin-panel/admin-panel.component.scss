@@ -27,9 +27,27 @@ mat-card {
   color: #1b5e20;
 }
 
+/* keep your existing rules … */
+
 mat-list-item {
   align-items: center;
+  gap: 0.5rem;
 }
-mat-list-item button {
-  margin-left: auto;
+
+/* Start icon slot: remove avatar bg and center the button */
+.start-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent; /* removes the tinted circle */
+  width: 40px; /* keeps layout consistent with list avatar slot */
+  height: 40px;
+  margin-right: 8px;
+}
+
+.start-icon .mat-mdc-icon-button {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  margin: 0; /* no odd extra offset */
 }

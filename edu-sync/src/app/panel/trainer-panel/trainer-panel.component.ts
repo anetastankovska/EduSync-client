@@ -1,4 +1,3 @@
-// src/app/panel/trainer-panel.component.ts
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,13 +10,14 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatOptionModule } from '@angular/material/core';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; // <-- add
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AcademyApi } from '../../services/academy.service';
 import { AuthService } from '../../services/auth.service';
 import { StudentApi } from '../../services/student.service';
 import { TrainerApi } from '../../services/trainer.service';
 import { StudentGradeApi } from '../../services/student-grade.service';
+import { SubjectApi } from '../../services/subject.service'; // <-- NEW
 
 type Role = 'student' | 'trainer' | 'admin';
 
@@ -44,7 +44,7 @@ type Seniority = (typeof SENIORITY_OPTIONS)[number];
     MatDividerModule,
     MatListModule,
     MatIconModule,
-    MatSnackBarModule, // <-- add
+    MatSnackBarModule,
   ],
   templateUrl: './trainer-panel.component.html',
   styleUrls: ['./trainer-panel.component.scss'],
@@ -55,8 +55,9 @@ export class TrainerPanelComponent implements OnInit {
   private trainerApi = inject(TrainerApi);
   private academyApi = inject(AcademyApi);
   private studentApi = inject(StudentApi);
+  private subjectApi = inject(SubjectApi); // <-- NEW
   private gradeApi = inject(StudentGradeApi);
-  private snack = inject(MatSnackBar); // <-- add
+  private snack = inject(MatSnackBar);
 
   loading = signal(true);
   saving = signal(false);
@@ -65,6 +66,16 @@ export class TrainerPanelComponent implements OnInit {
   trainerId!: number;
   academy: any | null = null;
   students = signal<Array<{ id: number; name: string; academyId: number }>>([]);
+
+  // subjects for trainer’s academy
+  mySubjects = signal<
+    Array<{
+      id: number;
+      name: string;
+      numberOfClasses?: number;
+      difficulty?: string;
+    }>
+  >([]); // <-- NEW
 
   seniorityOptions = [...SENIORITY_OPTIONS];
 
@@ -112,9 +123,12 @@ export class TrainerPanelComponent implements OnInit {
 
         const academyId = trainer.academyId;
         if (academyId) {
+          // academy card
           this.academyApi
             .getAcademy(academyId)
             .subscribe({ next: (a) => (this.academy = a) });
+
+          // students in my academy
           this.studentApi.getByAcademy(academyId).subscribe({
             next: (list) => {
               this.students.set(
@@ -130,9 +144,31 @@ export class TrainerPanelComponent implements OnInit {
                 err?.error?.message ?? 'Failed to load students.',
                 'error'
               ),
+          });
+
+          // subjects for my academy (THIS is the change)
+          this.subjectApi.getByAcademy(academyId).subscribe({
+            next: (subs) => {
+              this.mySubjects.set(
+                (subs ?? []).map((s: any) => ({
+                  id: s.id,
+                  name: s.name,
+                  numberOfClasses: s.numberOfClasses,
+                  difficulty: s.difficulty,
+                }))
+              );
+            },
+            error: (err) =>
+              this.toast(
+                err?.error?.message ?? 'Failed to load subjects.',
+                'error'
+              ),
             complete: () => this.loading.set(false),
           });
         } else {
+          // no academy: clear lists
+          this.students.set([]);
+          this.mySubjects.set([]);
           this.loading.set(false);
         }
       },
@@ -194,7 +230,6 @@ export class TrainerPanelComponent implements OnInit {
       });
   }
 
-  // snack helper
   private toast(
     message: string,
     type: 'success' | 'error' = 'success',
@@ -208,7 +243,6 @@ export class TrainerPanelComponent implements OnInit {
     });
   }
 
-  // helpers
   private decode<T = any>(token: string): T | null {
     try {
       return JSON.parse(atob(token.split('.')[1])) as T;
