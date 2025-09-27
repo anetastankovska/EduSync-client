@@ -1,4 +1,3 @@
-// src/app/core/api/trainer.api.ts
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 const BASE = 'http://localhost:4000/api';
@@ -20,7 +19,8 @@ export class TrainerApi {
     return this.http.delete(`${BASE}/trainer/${id}`);
   }
   getByAcademy(academyId: number) {
-    const params = new HttpParams().set('academyId', academyId);
+    // FIX: HttpParams takes strings
+    const params = new HttpParams().set('academyId', String(academyId));
     return this.http.get<any[]>(`${BASE}/trainer`, { params });
   }
   getMe() {
@@ -30,10 +30,12 @@ export class TrainerApi {
     return this.http.patch<any>(`${BASE}/trainer/me`, body);
   }
 
-  updateAcademy(id: number, academyId: number) {
+  // Allow null to unassign
+  updateAcademy(id: number, academyId: number | null) {
     return this.http.patch(`${BASE}/trainer/${id}/academy`, { academyId });
   }
   setSubjects(id: number, subjectIds: number[]) {
+    // You used PUT; that's fine. (PATCH would also be fine)
     return this.http.put(`${BASE}/trainer/${id}/subjects`, { subjectIds });
   }
 }

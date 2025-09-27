@@ -26,11 +26,11 @@ export class StudentApi {
   getMe() {
     return this.http.get<any>(`${BASE}/student/me`);
   }
-
   updateMe(body: any) {
     return this.http.patch<any>(`${BASE}/student/me`, body);
   }
-  updateAcademy(id: number, academyId: number) {
+
+  updateAcademy(id: number, academyId: number | null) {
     return this.http.patch(`${BASE}/student/${id}/academy`, { academyId });
   }
   setSubjects(id: number, subjectIds: number[]) {
