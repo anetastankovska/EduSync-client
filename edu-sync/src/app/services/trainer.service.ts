@@ -35,7 +35,6 @@ export class TrainerApi {
     return this.http.patch(`${BASE}/trainer/${id}/academy`, { academyId });
   }
   setSubjects(id: number, subjectIds: number[]) {
-    // You used PUT; that's fine. (PATCH would also be fine)
     return this.http.put(`${BASE}/trainer/${id}/subjects`, { subjectIds });
   }
 }

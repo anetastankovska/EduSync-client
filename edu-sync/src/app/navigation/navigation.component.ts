@@ -1,4 +1,3 @@
-// src/app/navigation/navigation.component.ts
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -29,7 +28,6 @@ export class NavigationComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
 
-  // Observables for template
   isLoggedIn$ = this.auth.jwt$.pipe(map((t) => !!t));
   role$ = this.auth.userRole$; // 'student' | 'trainer' | 'admin' | null
 

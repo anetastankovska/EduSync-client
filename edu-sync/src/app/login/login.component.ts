@@ -60,7 +60,6 @@ export class LoginComponent {
       next: () => {
         this.loading.set(false);
         // Token & role are already stored by AuthService + interceptor will attach them.
-        // Navigate wherever makes sense:
         this.router.navigateByUrl('/'); // or '/dashboard'
       },
       error: (err: any) => {
@@ -72,7 +71,6 @@ export class LoginComponent {
     });
   }
 
-  // convenience getters
   get email() {
     return this.form.get('email');
   }

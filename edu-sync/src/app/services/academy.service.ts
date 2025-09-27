@@ -1,4 +1,3 @@
-// src/app/core/api/academy.api.ts
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 const BASE = 'http://localhost:4000/api';

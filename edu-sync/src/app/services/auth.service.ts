@@ -1,4 +1,3 @@
-// src/app/core/auth/auth.service.ts
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, tap, switchMap } from 'rxjs';
@@ -14,7 +13,6 @@ interface LoginDto {
   password: string;
 }
 
-// Be flexible about server payload keys
 type LoginResponse =
   | { access_token: string; role?: string }
   | { accessToken: string; role?: string }

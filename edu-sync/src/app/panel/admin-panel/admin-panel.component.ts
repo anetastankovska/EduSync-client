@@ -1,7 +1,11 @@
-// src/app/panel/admin-panel.component.ts
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AcademyApi } from '../../services/academy.service';
+import { StudentApi } from '../../services/student.service';
+import { SubjectApi } from '../../services/subject.service';
+import { TrainerApi } from '../../services/trainer.service';
+import { dstr, num } from '../../util/util';
 
 // Material
 import { MatCardModule } from '@angular/material/card';
@@ -15,13 +19,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-
-// APIs & utils
-import { AcademyApi } from '../../services/academy.service';
-import { StudentApi } from '../../services/student.service';
-import { SubjectApi } from '../../services/subject.service';
-import { TrainerApi } from '../../services/trainer.service';
-import { dstr, num } from '../../util/util';
 
 @Component({
   selector: 'app-admin-panel',
