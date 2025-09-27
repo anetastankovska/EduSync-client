@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AcademyApi } from '../../services/academy.service';
 import { AuthService } from '../../services/auth.service';
@@ -37,6 +38,7 @@ type Role = 'student' | 'trainer' | 'admin';
     MatDividerModule,
     MatIconModule,
     MatListModule,
+    MatSnackBarModule,
   ],
   templateUrl: './student-panel.component.html',
   styleUrls: ['./student-panel.component.scss'],
@@ -49,6 +51,7 @@ export class StudentPanelComponent implements OnInit {
   private subjectApi = inject(SubjectApi);
   private trainerApi = inject(TrainerApi);
   private reviewApi = inject(TrainerReviewApi);
+  private snack = inject(MatSnackBar);
 
   loading = signal(true);
   saving = signal(false);
@@ -138,8 +141,9 @@ export class StudentPanelComponent implements OnInit {
         });
       },
       error: (err) => {
-        this.errorMsg.set(
-          err?.error?.message ?? 'Failed to load student data.'
+        this.toast(
+          err?.error?.message ?? 'Failed to load student data.',
+          'error'
         );
         this.loading.set(false);
       },
@@ -171,7 +175,7 @@ export class StudentPanelComponent implements OnInit {
         this.saving.set(false);
       },
       error: (err) => {
-        this.errorMsg.set(err?.error?.message ?? 'Failed to save details.');
+        this.toast(err?.error?.message ?? 'Failed to save details.', 'error');
         this.saving.set(false);
       },
     });
@@ -201,7 +205,10 @@ export class StudentPanelComponent implements OnInit {
           this.reviewing.set(false);
         },
         error: (err) => {
-          this.errorMsg.set(err?.error?.message ?? 'Failed to submit review.');
+          this.toast(
+            err?.error?.message ?? 'Failed to submit review.',
+            'error'
+          );
           this.reviewing.set(false);
         },
       });
@@ -224,5 +231,18 @@ export class StudentPanelComponent implements OnInit {
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
+  }
+
+  private toast(
+    message: string,
+    type: 'success' | 'error' = 'success',
+    duration = 3000
+  ) {
+    this.snack.open(message, 'OK', {
+      duration,
+      horizontalPosition: 'right',
+      verticalPosition: 'bottom',
+      panelClass: type === 'success' ? ['snack-success'] : ['snack-error'],
+    });
   }
 }

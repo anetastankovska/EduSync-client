@@ -1,3 +1,4 @@
+// src/app/panel/admin-panel.component.ts
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,6 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; // <-- add
 
 // APIs & utils
 import { AcademyApi } from '../../services/academy.service';
@@ -38,6 +40,7 @@ import { dstr, num } from '../../util/util';
     MatIconModule,
     MatDividerModule,
     MatListModule,
+    MatSnackBarModule, // <-- add
   ],
   templateUrl: './admin-panel.component.html',
   styleUrls: ['./admin-panel.component.scss'],
@@ -48,12 +51,11 @@ export class AdminPanelComponent implements OnInit {
   private subjectApi = inject(SubjectApi);
   private trainerApi = inject(TrainerApi);
   private studentApi = inject(StudentApi);
+  private snack = inject(MatSnackBar); // <-- add
 
   // UI state
   loading = signal(true);
   saving = signal(false);
-  errorMsg = signal<string | null>(null);
-  successMsg = signal<string | null>(null);
 
   // Data
   academies: any[] = [];
@@ -85,8 +87,6 @@ export class AdminPanelComponent implements OnInit {
 
   refreshAll(): void {
     this.loading.set(true);
-    this.errorMsg.set(null);
-    this.successMsg.set(null);
 
     Promise.all([
       this.academyApi
@@ -101,30 +101,27 @@ export class AdminPanelComponent implements OnInit {
         .getAll()
         .toPromise()
         .then((x: any[] | undefined) => {
-          this.trainers =
-            (x ?? []).map((t) => ({
-              ...t,
-              // normalize subjects → subjectIds for the UI
-              subjectIds: Array.isArray(t.subjects)
-                ? t.subjects.map((s: any) => s.id)
-                : t.subjectIds ?? [],
-            })) ?? [];
+          this.trainers = (x ?? []).map((t) => ({
+            ...t,
+            subjectIds: Array.isArray(t.subjects)
+              ? t.subjects.map((s: any) => s.id)
+              : t.subjectIds ?? [],
+          }));
         }),
       this.studentApi
         .getAll()
         .toPromise()
         .then((x: any[] | undefined) => {
-          this.students =
-            (x ?? []).map((s) => ({
-              ...s,
-              subjectIds: Array.isArray(s.subjects)
-                ? s.subjects.map((sub: any) => sub.id)
-                : s.subjectIds ?? [],
-            })) ?? [];
+          this.students = (x ?? []).map((s) => ({
+            ...s,
+            subjectIds: Array.isArray(s.subjects)
+              ? s.subjects.map((sub: any) => sub.id)
+              : s.subjectIds ?? [],
+          }));
         }),
     ])
       .catch((err) =>
-        this.errorMsg.set(err?.error?.message ?? 'Failed to load data.')
+        this.toast(err?.error?.message ?? 'Failed to load data.', 'error')
       )
       .finally(() => this.loading.set(false));
   }
@@ -148,7 +145,7 @@ export class AdminPanelComponent implements OnInit {
 
     this.academyApi.create(payload).subscribe({
       next: (a) => {
-        this.successMsg.set('Academy created.');
+        this.toast('Academy created.');
         this.academies.unshift(a);
         this.createAcademyForm.reset({
           name: '',
@@ -163,7 +160,7 @@ export class AdminPanelComponent implements OnInit {
         this.saving.set(false);
       },
       error: (err) => {
-        this.errorMsg.set(err?.error?.message ?? 'Failed to create academy.');
+        this.toast(err?.error?.message ?? 'Failed to create academy.', 'error');
         this.saving.set(false);
       },
     });
@@ -174,7 +171,7 @@ export class AdminPanelComponent implements OnInit {
     this.academyApi.delete(id).subscribe({
       next: () => (this.academies = this.academies.filter((a) => a.id !== id)),
       error: (err) =>
-        this.errorMsg.set(err?.error?.message ?? 'Failed to delete academy.'),
+        this.toast(err?.error?.message ?? 'Failed to delete academy.', 'error'),
     });
   }
 
@@ -196,7 +193,7 @@ export class AdminPanelComponent implements OnInit {
 
     this.subjectApi.create(payload).subscribe({
       next: (s) => {
-        this.successMsg.set('Subject created.');
+        this.toast('Subject created.');
         this.subjects.unshift(s);
         this.createSubjectForm.reset({
           name: '',
@@ -210,7 +207,7 @@ export class AdminPanelComponent implements OnInit {
         this.saving.set(false);
       },
       error: (err) => {
-        this.errorMsg.set(err?.error?.message ?? 'Failed to create subject.');
+        this.toast(err?.error?.message ?? 'Failed to create subject.', 'error');
         this.saving.set(false);
       },
     });
@@ -221,7 +218,7 @@ export class AdminPanelComponent implements OnInit {
     this.subjectApi.delete(id).subscribe({
       next: () => (this.subjects = this.subjects.filter((s) => s.id !== id)),
       error: (err) =>
-        this.errorMsg.set(err?.error?.message ?? 'Failed to delete subject.'),
+        this.toast(err?.error?.message ?? 'Failed to delete subject.', 'error'),
     });
   }
 
@@ -231,7 +228,7 @@ export class AdminPanelComponent implements OnInit {
     this.trainerApi.delete(id).subscribe({
       next: () => (this.trainers = this.trainers.filter((t) => t.id !== id)),
       error: (err) =>
-        this.errorMsg.set(err?.error?.message ?? 'Failed to delete trainer.'),
+        this.toast(err?.error?.message ?? 'Failed to delete trainer.', 'error'),
     });
   }
 
@@ -240,7 +237,7 @@ export class AdminPanelComponent implements OnInit {
     this.studentApi.delete(id).subscribe({
       next: () => (this.students = this.students.filter((s) => s.id !== id)),
       error: (err) =>
-        this.errorMsg.set(err?.error?.message ?? 'Failed to delete student.'),
+        this.toast(err?.error?.message ?? 'Failed to delete student.', 'error'),
     });
   }
 
@@ -255,10 +252,12 @@ export class AdminPanelComponent implements OnInit {
       next: () => {
         t.academyId = academyId;
         t.subjectIds = []; // clear when academy changes
+        this.toast('Trainer academy updated.');
       },
       error: (err) =>
-        this.errorMsg.set(
-          err?.error?.message ?? 'Failed to set trainer academy.'
+        this.toast(
+          err?.error?.message ?? 'Failed to set trainer academy.',
+          'error'
         ),
     });
   }
@@ -266,10 +265,14 @@ export class AdminPanelComponent implements OnInit {
   onSetTrainerSubjects(t: any, subjectIds: number[]) {
     if (!t.academyId) return;
     this.trainerApi.setSubjects(t.id, subjectIds).subscribe({
-      next: () => (t.subjectIds = subjectIds),
+      next: () => {
+        t.subjectIds = subjectIds;
+        this.toast('Trainer subjects updated.');
+      },
       error: (err) =>
-        this.errorMsg.set(
-          err?.error?.message ?? 'Failed to set trainer subjects.'
+        this.toast(
+          err?.error?.message ?? 'Failed to set trainer subjects.',
+          'error'
         ),
     });
   }
@@ -279,10 +282,12 @@ export class AdminPanelComponent implements OnInit {
       next: () => {
         s.academyId = academyId;
         s.subjectIds = [];
+        this.toast('Student academy updated.');
       },
       error: (err) =>
-        this.errorMsg.set(
-          err?.error?.message ?? 'Failed to set student academy.'
+        this.toast(
+          err?.error?.message ?? 'Failed to set student academy.',
+          'error'
         ),
     });
   }
@@ -290,11 +295,29 @@ export class AdminPanelComponent implements OnInit {
   onSetStudentSubjects(s: any, subjectIds: number[]) {
     if (!s.academyId) return;
     this.studentApi.setSubjects(s.id, subjectIds).subscribe({
-      next: () => (s.subjectIds = subjectIds),
+      next: () => {
+        s.subjectIds = subjectIds;
+        this.toast('Student subjects updated.');
+      },
       error: (err) =>
-        this.errorMsg.set(
-          err?.error?.message ?? 'Failed to set student subjects.'
+        this.toast(
+          err?.error?.message ?? 'Failed to set student subjects.',
+          'error'
         ),
+    });
+  }
+
+  // snack helper
+  private toast(
+    message: string,
+    type: 'success' | 'error' = 'success',
+    duration = 3000
+  ) {
+    this.snack.open(message, 'OK', {
+      duration,
+      horizontalPosition: 'right',
+      verticalPosition: 'bottom',
+      panelClass: type === 'success' ? ['snack-success'] : ['snack-error'],
     });
   }
 }
