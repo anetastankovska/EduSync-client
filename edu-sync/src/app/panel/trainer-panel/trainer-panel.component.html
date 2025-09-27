@@ -1,0 +1,109 @@
+<!-- src/app/panel/trainer-panel.component.html -->
+<mat-card>
+  <h2>Trainer Panel</h2>
+
+  <div class="alerts">
+    <mat-card *ngIf="errorMsg()" class="error">{{ errorMsg() }}</mat-card>
+    <mat-card *ngIf="successMsg()" class="success">{{ successMsg() }}</mat-card>
+  </div>
+
+  <!-- DETAILS -->
+  <section class="section">
+    <h3>My Details</h3>
+
+    <form [formGroup]="detailForm" (ngSubmit)="saveDetails()" class="form">
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Age</mat-label>
+        <input matInput type="number" min="18" formControlName="age" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Seniority</mat-label>
+        <mat-select formControlName="seniority">
+          <mat-option *ngFor="let s of seniorityOptions" [value]="s">{{
+            s
+          }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="saving() || loading()"
+      >
+        {{ saving() ? "Saving…" : "Save details" }}
+      </button>
+    </form>
+  </section>
+
+  <mat-divider class="sep"></mat-divider>
+
+  <!-- ACADEMY -->
+  <section class="section">
+    <h3>My Academy</h3>
+    <div *ngIf="academy; else noAcad" class="academy">
+      <div>
+        <strong>{{ academy.name }}</strong>
+      </div>
+      <div>{{ academy.description }}</div>
+      <div>Start: {{ academy.startDate | date }}</div>
+      <div>End: {{ academy.endDate | date }}</div>
+      <div>Price: {{ academy.price | currency }}</div>
+    </div>
+    <ng-template #noAcad>
+      <p>No academy assigned.</p>
+    </ng-template>
+  </section>
+
+  <mat-divider class="sep"></mat-divider>
+
+  <!-- GRADE A STUDENT -->
+  <section class="section">
+    <h3>Give Feedback to a Student</h3>
+    <form [formGroup]="gradeForm" (ngSubmit)="submitGrade()" class="form">
+      <mat-form-field appearance="outline">
+        <mat-label>Student</mat-label>
+        <mat-select formControlName="studentId">
+          <mat-option *ngFor="let s of students()" [value]="s.id">
+            {{ s.name }} — Academy #{{ s.academyId }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Grade (1–5)</mat-label>
+        <input matInput type="number" min="1" max="5" formControlName="grade" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Comment</mat-label>
+        <textarea
+          matInput
+          rows="3"
+          formControlName="description"
+          placeholder="Optional note"
+        ></textarea>
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        color="accent"
+        type="submit"
+        [disabled]="grading() || loading()"
+      >
+        {{ grading() ? "Submitting…" : "Submit feedback" }}
+      </button>
+    </form>
+  </section>
+</mat-card>

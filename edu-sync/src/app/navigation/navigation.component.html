@@ -7,6 +7,10 @@
 
   <span class="spacer"></span>
 
+  <span class="role-badge" *ngIf="role$ | async as role">
+    {{ role }}
+  </span>
+
   <a
     mat-button
     routerLink="/home"
@@ -16,10 +20,31 @@
   >
 
   <a mat-button routerLink="/programs" routerLinkActive="active">Programs</a>
-  <a mat-button routerLink="/register" routerLinkActive="active">Register</a>
 
-  <a mat-stroked-button color="accent" routerLink="/login">
-    <mat-icon>login</mat-icon>
-    Login
-  </a>
+  <!-- When NOT logged in -->
+  <ng-container *ngIf="!(isLoggedIn$ | async); else loggedIn">
+    <a mat-button routerLink="/register" routerLinkActive="active">Register</a>
+
+    <a mat-stroked-button color="accent" routerLink="/login">
+      <mat-icon>login</mat-icon>
+      Login
+    </a>
+  </ng-container>
+
+  <!-- When logged in -->
+  <ng-template #loggedIn>
+    <a
+      *ngIf="isLoggedIn$ | async"
+      mat-button
+      routerLink="/panel"
+      routerLinkActive="active"
+    >
+      My Panel
+    </a>
+    <!-- Optional: show role badge -->
+    <button mat-stroked-button color="accent" (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </ng-template>
 </mat-toolbar>

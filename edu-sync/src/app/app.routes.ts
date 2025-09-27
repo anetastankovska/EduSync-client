@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard, matchRole, panelAutoRedirect } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -18,11 +19,51 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./register/register.component').then((m) => m.RegisterComponent),
   },
-  // app.routes.ts
   {
     path: 'programs',
     loadComponent: () =>
       import('./programs/programs.component').then((m) => m.ProgramsComponent),
+  },
+
+  // Generic panel entry → redirects by role
+  {
+    path: 'panel',
+    canActivate: [panelAutoRedirect],
+    // Dummy placeholder component is fine; it never renders because guard redirects.
+    loadComponent: () =>
+      import('./shared/spinner-loader/spinner-loader.component')
+        .then((m) => m.SpinnerLoaderComponent)
+        .catch(() => Promise.resolve({ default: () => null } as any)),
+  },
+
+  // Admin panel (admin only)
+  {
+    path: 'panel/admin',
+    canMatch: [authGuard, matchRole(['admin'])],
+    loadComponent: () =>
+      import('./panel/admin-panel/admin-panel.component').then(
+        (m) => m.AdminPanelComponent
+      ),
+  },
+
+  // Trainer panel (trainer only)
+  {
+    path: 'panel/trainer',
+    canMatch: [authGuard, matchRole(['trainer'])],
+    loadComponent: () =>
+      import('./panel/trainer-panel/trainer-panel.component').then(
+        (m) => m.TrainerPanelComponent
+      ),
+  },
+
+  // Student panel (student only)
+  {
+    path: 'panel/student',
+    canMatch: [authGuard, matchRole(['student'])],
+    loadComponent: () =>
+      import('./panel/student-panel/student-panel.component').then(
+        (m) => m.StudentPanelComponent
+      ),
   },
 
   // Keep wildcard last

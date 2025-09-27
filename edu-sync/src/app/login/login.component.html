@@ -46,8 +46,16 @@
         >
       </mat-form-field>
 
-      <button mat-flat-button color="primary" type="submit" class="submit">
-        Login
+      <mat-error *ngIf="errorMsg()">{{ errorMsg() }}</mat-error>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        class="submit"
+        [disabled]="loading()"
+      >
+        {{ loading() ? "Signing in…" : "Sign in" }}
       </button>
     </form>
 

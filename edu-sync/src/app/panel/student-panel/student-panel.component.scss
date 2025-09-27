@@ -1,0 +1,38 @@
+/* src/app/panel/student-panel.component.scss */
+mat-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+
+  .full {
+    grid-column: 1 / -1;
+  }
+}
+
+.sep {
+  margin: 0.25rem 0;
+}
+
+.alerts > mat-card.error {
+  background: #ffe6e6;
+  color: #b00020;
+}
+.alerts > mat-card.success {
+  background: #e6ffee;
+  color: #1b5e20;
+}
+
+.academy .row > div {
+  margin-bottom: 0.25rem;
+}

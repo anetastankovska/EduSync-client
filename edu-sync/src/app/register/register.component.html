@@ -74,10 +74,24 @@
         >
       </mat-form-field>
 
+      <!-- Role -->
+      <mat-form-field appearance="outline">
+        <mat-label>Role</mat-label>
+        <mat-select formControlName="role">
+          <mat-option *ngFor="let r of roleOptions" [value]="r">{{
+            r
+          }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="role?.hasError('required')"
+          >Role is required</mat-error
+        >
+      </mat-form-field>
+
       <button mat-flat-button color="primary" type="submit" class="submit">
         Create account
       </button>
     </form>
+
     <div class="alt">
       Already have an account? <a routerLink="/login">Login</a>
     </div>

@@ -8,7 +8,7 @@ import {
   ValidationErrors,
   ValidatorFn,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 // Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -16,11 +16,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { AuthService } from '../services/auth.service';
+
+type Role = 'student' | 'trainer' | 'admin';
 
 interface RegisterUserDto {
   email: string;
   password: string;
-  // role intentionally omitted — BE defaults to Role.User
+  role: Role; // now included
 }
 
 // Validator: passwords must match
@@ -35,7 +39,6 @@ function matchPasswords(
       group.get(confirmKey)?.setErrors({ mismatch: true });
       return { mismatch: true };
     }
-    // Clear mismatch if previously set and now matches
     const confirmCtrl = group.get(confirmKey);
     if (confirmCtrl?.hasError('mismatch')) {
       const { mismatch, ...rest } = confirmCtrl.errors ?? {};
@@ -57,20 +60,27 @@ function matchPasswords(
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    MatSelectModule,
   ],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
 })
 export class RegisterComponent {
   private fb = inject(FormBuilder);
+  private auth = inject(AuthService);
+  private router = inject(Router);
+
   hidePassword = signal(true);
   hideConfirm = signal(true);
+
+  roleOptions: Role[] = ['student', 'trainer'];
 
   form = this.fb.group(
     {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]],
       confirmPassword: ['', [Validators.required]],
+      role: ['student' as Role, [Validators.required]], // default Student
     },
     { validators: matchPasswords() }
   );
@@ -80,14 +90,22 @@ export class RegisterComponent {
       this.form.markAllAsTouched();
       return;
     }
-    const { email, password } = this.form.getRawValue() as {
+    const { email, password, role } = this.form.getRawValue() as {
       email: string;
       password: string;
+      role: Role;
     };
-    const payload: RegisterUserDto = { email, password };
 
-    // TODO: AuthService.register(payload).subscribe(...)
-    console.log('REGISTER payload', payload);
+    const payload: RegisterUserDto = { email, password, role };
+    this.auth.register(payload).subscribe({
+      next: () => {
+        // Navigate immediately to login page on successful registration
+        this.router.navigate(['/login']);
+      },
+      error: (err: any) => {
+        console.error('Registration failed', err);
+      },
+    });
   }
 
   get email() {
@@ -98,5 +116,8 @@ export class RegisterComponent {
   }
   get confirmPassword() {
     return this.form.get('confirmPassword');
+  }
+  get role() {
+    return this.form.get('role');
   }
 }

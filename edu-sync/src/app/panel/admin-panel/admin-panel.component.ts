@@ -1,0 +1,236 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+
+// Material Modules
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatListModule } from '@angular/material/list';
+
+import { AcademyApi } from '../../services/academy.service';
+import { StudentApi } from '../../services/student.service';
+import { SubjectApi } from '../../services/subject.service';
+import { TrainerApi } from '../../services/trainer.service';
+import { dstr, num } from '../../util/util';
+
+@Component({
+  selector: 'app-admin-panel',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatButtonModule,
+    MatIconModule,
+    MatDividerModule,
+    MatListModule,
+  ],
+  templateUrl: './admin-panel.component.html',
+  styleUrls: ['./admin-panel.component.scss'],
+})
+export class AdminPanelComponent implements OnInit {
+  private fb = inject(FormBuilder);
+  private academyApi = inject(AcademyApi);
+  private subjectApi = inject(SubjectApi);
+  private trainerApi = inject(TrainerApi);
+  private studentApi = inject(StudentApi);
+
+  loading = signal(true);
+  saving = signal(false);
+  errorMsg = signal<string | null>(null);
+  successMsg = signal<string | null>(null);
+
+  academies: any[] = [];
+  subjects: any[] = [];
+  trainers: any[] = [];
+  students: any[] = [];
+
+  // ----- Create Academy form -----
+  createAcademyForm = this.fb.group({
+    name: ['', [Validators.required]],
+    description: ['', [Validators.required]],
+    startDate: [null as Date | null, [Validators.required]],
+    endDate: [null as Date | null, [Validators.required]],
+    price: [0, [Validators.required, Validators.min(0)]],
+  });
+
+  // ----- Create Subject form -----
+  difficultyOptions = ['easy', 'medium', 'hard'];
+  createSubjectForm = this.fb.group({
+    name: ['', [Validators.required]],
+    numberOfClasses: [1, [Validators.required, Validators.min(0)]],
+    difficulty: ['', [Validators.required]],
+    academyId: [null as number | null, [Validators.required]],
+  });
+
+  ngOnInit(): void {
+    this.refreshAll();
+  }
+
+  refreshAll(): void {
+    this.loading.set(true);
+    this.errorMsg.set(null);
+    this.successMsg.set(null);
+
+    // Load all data in parallel
+    Promise.all([
+      this.academyApi
+        .getAll()
+        .toPromise()
+        .then((x) => (this.academies = x ?? [])),
+      this.subjectApi
+        .getAll()
+        .toPromise()
+        .then((x) => (this.subjects = x ?? [])),
+      this.trainerApi
+        .getAll()
+        .toPromise()
+        .then((x) => (this.trainers = x ?? [])),
+      this.studentApi
+        .getAll()
+        .toPromise()
+        .then((x) => (this.students = x ?? [])),
+    ])
+      .catch((err) => {
+        this.errorMsg.set(err?.error?.message ?? 'Failed to load data.');
+      })
+      .finally(() => this.loading.set(false));
+  }
+
+  // ------- Create Academy -------
+  createAcademy(): void {
+    if (this.createAcademyForm.invalid) {
+      this.createAcademyForm.markAllAsTouched();
+      return;
+    }
+    this.saving.set(true);
+
+    const v = this.createAcademyForm.getRawValue();
+    const payload = {
+      name: v.name ?? '',
+      description: v.description ?? '',
+      startDate: dstr(v.startDate), // "YYYY-MM-DD"
+      endDate: dstr(v.endDate), // "YYYY-MM-DD"
+      price: num(v.price),
+    };
+
+    this.academyApi.create(payload).subscribe({
+      next: (a) => {
+        this.successMsg.set('Academy created.');
+        this.academies.unshift(a);
+        this.createAcademyForm.reset({
+          name: '',
+          description: '',
+          startDate: null,
+          endDate: null,
+          price: 0,
+        });
+        this.createAcademyForm.markAsPristine();
+        this.createAcademyForm.markAsUntouched();
+        this.createAcademyForm.updateValueAndValidity();
+        this.saving.set(false);
+      },
+      error: (err) => {
+        this.errorMsg.set(err?.error?.message ?? 'Failed to create academy.');
+        this.saving.set(false);
+      },
+    });
+  }
+
+  deleteAcademy(id: number): void {
+    if (!confirm('Delete academy?')) return;
+    this.academyApi.delete(id).subscribe({
+      next: () => {
+        this.academies = this.academies.filter((a) => a.id !== id);
+      },
+      error: (err) =>
+        this.errorMsg.set(err?.error?.message ?? 'Failed to delete academy.'),
+    });
+  }
+
+  // ------- Create Subject -------
+  createSubject(): void {
+    if (this.createSubjectForm.invalid) {
+      this.createSubjectForm.markAllAsTouched();
+      return;
+    }
+    this.saving.set(true);
+
+    const v = this.createSubjectForm.getRawValue();
+    const payload = {
+      name: v.name ?? '',
+      numberOfClasses: num(v.numberOfClasses),
+      difficulty: (v.difficulty ?? '') as string,
+      academyId: num(v.academyId),
+    };
+
+    this.subjectApi.create(payload).subscribe({
+      next: (s) => {
+        this.successMsg.set('Subject created.');
+        this.subjects.unshift(s);
+        this.createSubjectForm.reset({
+          name: '',
+          numberOfClasses: 1,
+          difficulty: '',
+          academyId: null,
+        });
+        this.createSubjectForm.markAsPristine();
+        this.createSubjectForm.markAsUntouched();
+        this.createSubjectForm.updateValueAndValidity();
+        this.saving.set(false);
+      },
+      error: (err) => {
+        this.errorMsg.set(err?.error?.message ?? 'Failed to create subject.');
+        this.saving.set(false);
+      },
+    });
+  }
+
+  deleteSubject(id: number): void {
+    if (!confirm('Delete subject?')) return;
+    this.subjectApi.delete(id).subscribe({
+      next: () => (this.subjects = this.subjects.filter((s) => s.id !== id)),
+      error: (err) =>
+        this.errorMsg.set(err?.error?.message ?? 'Failed to delete subject.'),
+    });
+  }
+
+  // ------- Delete Trainer / Student -------
+  deleteTrainer(id: number): void {
+    if (!confirm('Delete trainer?')) return;
+    this.trainerApi.delete(id).subscribe({
+      next: () => (this.trainers = this.trainers.filter((t) => t.id !== id)),
+      error: (err) =>
+        this.errorMsg.set(err?.error?.message ?? 'Failed to delete trainer.'),
+    });
+  }
+
+  deleteStudent(id: number): void {
+    if (!confirm('Delete student?')) return;
+    this.studentApi.delete(id).subscribe({
+      next: () => (this.students = this.students.filter((s) => s.id !== id)),
+      error: (err) =>
+        this.errorMsg.set(err?.error?.message ?? 'Failed to delete student.'),
+    });
+  }
+
+  // helpers
+  private toIsoDate(d: Date): string {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+}

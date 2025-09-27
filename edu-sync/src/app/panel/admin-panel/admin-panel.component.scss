@@ -1,0 +1,35 @@
+/* src/app/panel/admin-panel.component.scss */
+mat-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.section {
+  display: grid;
+  gap: 0.75rem;
+}
+.form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+.sep {
+  margin: 0.25rem 0;
+}
+
+.alerts > mat-card.error {
+  background: #ffe6e6;
+  color: #b00020;
+}
+.alerts > mat-card.success {
+  background: #e6ffee;
+  color: #1b5e20;
+}
+
+mat-list-item {
+  align-items: center;
+}
+mat-list-item button {
+  margin-left: auto;
+}

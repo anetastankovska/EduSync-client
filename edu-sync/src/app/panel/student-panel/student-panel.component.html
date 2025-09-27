@@ -1,0 +1,113 @@
+<!-- src/app/panel/student-panel.component.html -->
+<mat-card>
+  <h2>Student Panel</h2>
+
+  <div class="alerts">
+    <mat-card *ngIf="errorMsg()" class="error">{{ errorMsg() }}</mat-card>
+    <mat-card *ngIf="successMsg()" class="success">{{ successMsg() }}</mat-card>
+  </div>
+
+  <!-- DETAILS -->
+  <section class="section">
+    <h3>My Details</h3>
+    <form [formGroup]="detailForm" (ngSubmit)="saveDetails()" class="form">
+      <mat-form-field appearance="outline">
+        <mat-label>Address</mat-label>
+        <input matInput formControlName="address" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Telephone</mat-label>
+        <input matInput formControlName="telephone" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Date of birth</mat-label>
+        <input matInput [matDatepicker]="dp" formControlName="dateOfBirth" />
+        <mat-datepicker-toggle matSuffix [for]="dp"></mat-datepicker-toggle>
+        <mat-datepicker #dp></mat-datepicker>
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="saving() || loading()"
+      >
+        {{ saving() ? "Saving…" : "Save details" }}
+      </button>
+    </form>
+  </section>
+
+  <mat-divider class="sep"></mat-divider>
+
+  <!-- REVIEW TRAINER -->
+  <section class="section">
+    <h3>Rate a Trainer</h3>
+    <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="form">
+      <mat-form-field appearance="outline">
+        <mat-label>Trainer</mat-label>
+        <mat-select formControlName="trainerId">
+          <mat-option *ngFor="let t of trainers" [value]="t.id">{{
+            t.name
+          }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Grade (1–5)</mat-label>
+        <input matInput type="number" min="1" max="5" formControlName="grade" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Comment</mat-label>
+        <textarea
+          matInput
+          rows="3"
+          formControlName="description"
+          placeholder="Why this rating?"
+        ></textarea>
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        color="accent"
+        type="submit"
+        [disabled]="reviewing() || loading()"
+      >
+        {{ reviewing() ? "Submitting…" : "Submit review" }}
+      </button>
+    </form>
+  </section>
+
+  <mat-divider class="sep"></mat-divider>
+
+  <!-- ACADEMY & SUBJECTS -->
+  <section class="section">
+    <h3>My Academy</h3>
+    <div *ngIf="academy; else noAcad" class="academy">
+      <div class="row">
+        <div>
+          <strong>{{ academy.name }}</strong>
+        </div>
+        <div>{{ academy.description }}</div>
+        <div>Start: {{ academy.startDate | date }}</div>
+        <div>End: {{ academy.endDate | date }}</div>
+        <div>Price: {{ academy.price | currency }}</div>
+      </div>
+
+      <h4>Subjects</h4>
+      <mat-list>
+        <mat-list-item *ngFor="let s of subjects">
+          <div matListItemTitle>{{ s.name }}</div>
+          <div matListItemLine>
+            {{ s.numberOfClasses }} classes — {{ s.difficulty }}
+          </div>
+        </mat-list-item>
+      </mat-list>
+    </div>
+    <ng-template #noAcad>
+      <p>No academy assigned.</p>
+    </ng-template>
+  </section>
+</mat-card>

@@ -1,0 +1,194 @@
+<!-- src/app/panel/admin-panel.component.html -->
+<mat-card>
+  <h2>Admin Panel</h2>
+
+  <!-- <div class="alerts">
+    <mat-card *ngIf="errorMsg()" class="error">{{ errorMsg() }}</mat-card>
+    <mat-card *ngIf="successMsg()" class="success">{{ successMsg() }}</mat-card>
+  </div> -->
+
+  <!-- CREATE ACADEMY -->
+  <section class="section">
+    <h3>Create Academy</h3>
+    <form
+      [formGroup]="createAcademyForm"
+      (ngSubmit)="createAcademy()"
+      class="form"
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Description</mat-label>
+        <input matInput formControlName="description" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Start date</mat-label>
+        <input matInput [matDatepicker]="sd" formControlName="startDate" />
+        <mat-datepicker-toggle matSuffix [for]="sd"></mat-datepicker-toggle>
+        <mat-datepicker #sd></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>End date</mat-label>
+        <input matInput [matDatepicker]="ed" formControlName="endDate" />
+        <mat-datepicker-toggle matSuffix [for]="ed"></mat-datepicker-toggle>
+        <mat-datepicker #ed></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Price</mat-label>
+        <input matInput type="number" min="0" formControlName="price" />
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="saving()"
+      >
+        {{ saving() ? "Creating…" : "Create academy" }}
+      </button>
+    </form>
+  </section>
+
+  <mat-divider class="sep"></mat-divider>
+
+  <!-- CREATE SUBJECT -->
+  <section class="section">
+    <h3>Create Subject</h3>
+    <form
+      [formGroup]="createSubjectForm"
+      (ngSubmit)="createSubject()"
+      class="form"
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Number of classes</mat-label>
+        <input
+          matInput
+          type="number"
+          min="0"
+          formControlName="numberOfClasses"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Difficulty</mat-label>
+        <mat-select formControlName="difficulty">
+          <mat-option *ngFor="let d of difficultyOptions" [value]="d">{{
+            d
+          }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Academy</mat-label>
+        <mat-select formControlName="academyId">
+          <mat-option *ngFor="let a of academies" [value]="a.id">
+            {{ a.name }} (ID {{ a.id }})
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="saving()"
+      >
+        {{ saving() ? "Creating…" : "Create subject" }}
+      </button>
+    </form>
+  </section>
+
+  <mat-divider class="sep"></mat-divider>
+
+  <!-- LISTS -->
+  <section class="section">
+    <h3>Academies</h3>
+    <mat-list>
+      <mat-list-item *ngFor="let a of academies">
+        <div matListItemTitle>{{ a.name }}</div>
+        <div matListItemLine>{{ a.description }}</div>
+        <button
+          mat-icon-button
+          color="warn"
+          (click)="deleteAcademy(a.id)"
+          aria-label="Delete"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-list-item>
+    </mat-list>
+  </section>
+
+  <section class="section">
+    <h3>Subjects</h3>
+    <mat-list>
+      <mat-list-item *ngFor="let s of subjects">
+        <div matListItemTitle>{{ s.name }}</div>
+        <div matListItemLine>
+          {{ s.numberOfClasses }} classes — {{ s.difficulty }} — Academy #{{
+            s.academyId
+          }}
+        </div>
+        <button
+          mat-icon-button
+          color="warn"
+          (click)="deleteSubject(s.id)"
+          aria-label="Delete"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-list-item>
+    </mat-list>
+  </section>
+
+  <section class="section">
+    <h3>Trainers</h3>
+    <mat-list>
+      <mat-list-item *ngFor="let t of trainers">
+        <div matListItemTitle>{{ t.name }}</div>
+        <div matListItemLine>
+          {{ t.email }} — Age {{ t.age }} — Academy #{{ t.academyId }}
+        </div>
+        <button
+          mat-icon-button
+          color="warn"
+          (click)="deleteTrainer(t.id)"
+          aria-label="Delete"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-list-item>
+    </mat-list>
+  </section>
+
+  <section class="section">
+    <h3>Students</h3>
+    <mat-list>
+      <mat-list-item *ngFor="let s of students">
+        <div matListItemTitle>{{ s.name }}</div>
+        <div matListItemLine>
+          {{ s.email }} — Age {{ s.age }} — Academy #{{ s.academyId }}
+        </div>
+        <button
+          mat-icon-button
+          color="warn"
+          (click)="deleteStudent(s.id)"
+          aria-label="Delete"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-list-item>
+    </mat-list>
+  </section>
+</mat-card>
