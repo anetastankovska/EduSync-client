@@ -1,4 +1,3 @@
-<!-- src/app/panel/student-panel.component.html -->
 <mat-card>
   <h2>Student Panel</h2>
 
@@ -11,6 +10,11 @@
   <section class="section">
     <h3>My Details</h3>
     <form [formGroup]="detailForm" (ngSubmit)="saveDetails()" class="form">
+      <mat-form-field appearance="outline">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" />
+      </mat-form-field>
+
       <mat-form-field appearance="outline">
         <mat-label>Address</mat-label>
         <input matInput formControlName="address" />
@@ -48,9 +52,9 @@
       <mat-form-field appearance="outline">
         <mat-label>Trainer</mat-label>
         <mat-select formControlName="trainerId">
-          <mat-option *ngFor="let t of trainers" [value]="t.id">{{
-            t.name
-          }}</mat-option>
+          <mat-option *ngFor="let t of trainers" [value]="t.id">
+            {{ t.name }}
+          </mat-option>
         </mat-select>
       </mat-form-field>
 

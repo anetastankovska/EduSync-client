@@ -1,4 +1,3 @@
-// src/app/panel/student-panel.component.ts
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -51,14 +50,12 @@ export class StudentPanelComponent implements OnInit {
   private trainerApi = inject(TrainerApi);
   private reviewApi = inject(TrainerReviewApi);
 
-  // UI state
   loading = signal(true);
   saving = signal(false);
   reviewing = signal(false);
   errorMsg = signal<string | null>(null);
   successMsg = signal<string | null>(null);
 
-  // Data
   studentId!: number;
   academy: any | null = null;
   subjects: Array<{
@@ -69,11 +66,12 @@ export class StudentPanelComponent implements OnInit {
   }> = [];
   trainers: Array<{ id: number; name: string }> = [];
 
-  // Forms
+  // Added name to the form
   detailForm = this.fb.group({
+    name: ['', [Validators.required, Validators.maxLength(100)]],
     address: ['', [Validators.required, Validators.maxLength(200)]],
     telephone: ['', [Validators.required, Validators.maxLength(30)]],
-    dateOfBirth: [null as Date | null, [Validators.required]], // Date | null for datepicker
+    dateOfBirth: [null as Date | null, [Validators.required]],
   });
 
   reviewForm = this.fb.group({
@@ -99,7 +97,6 @@ export class StudentPanelComponent implements OnInit {
       return;
     }
     this.studentId = Number(payload.sub);
-
     this.loadAll();
   }
 
@@ -108,11 +105,11 @@ export class StudentPanelComponent implements OnInit {
 
     this.studentApi.getMe().subscribe({
       next: (student) => {
-        // keep the db student id if you still need it elsewhere
+        // keep db id if you use it elsewhere
         this.studentId = student.id;
 
-        // Prefill details from FLAT fields (existing values if present)
         this.detailForm.patchValue({
+          name: student?.name ?? '',
           address: student?.address ?? '',
           telephone: student?.telephone ?? '',
           dateOfBirth: student?.dateOfBirth
@@ -129,19 +126,14 @@ export class StudentPanelComponent implements OnInit {
           return;
         }
 
-        this.academyApi.getAcademy(academyId).subscribe({
-          next: (a) => (this.academy = a),
-          error: () => {},
-        });
-
-        this.subjectApi.getByAcademy(academyId).subscribe({
-          next: (subs) => (this.subjects = subs ?? []),
-          error: () => {},
-        });
-
+        this.academyApi
+          .getAcademy(academyId)
+          .subscribe({ next: (a) => (this.academy = a) });
+        this.subjectApi
+          .getByAcademy(academyId)
+          .subscribe({ next: (subs) => (this.subjects = subs ?? []) });
         this.trainerApi.getByAcademy(academyId).subscribe({
           next: (trs) => (this.trainers = trs ?? []),
-          error: () => {},
           complete: () => this.loading.set(false),
         });
       },
@@ -163,15 +155,16 @@ export class StudentPanelComponent implements OnInit {
     this.errorMsg.set(null);
     this.successMsg.set(null);
 
-    const { address, telephone, dateOfBirth } = this.detailForm.getRawValue();
+    const { name, address, telephone, dateOfBirth } =
+      this.detailForm.getRawValue();
 
     const payload = {
+      name, // <-- send name
       address,
       telephone,
       dateOfBirth: this.toIsoDateString(dateOfBirth as Date),
     };
 
-    // call /student/me
     this.studentApi.updateMe(payload).subscribe({
       next: () => {
         this.successMsg.set('Details saved.');
