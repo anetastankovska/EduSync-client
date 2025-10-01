@@ -1,6 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+
 import { AcademyApi } from '../../services/academy.service';
 import { StudentApi } from '../../services/student.service';
 import { SubjectApi } from '../../services/subject.service';
@@ -59,6 +61,8 @@ export class AdminPanelComponent implements OnInit {
   subjects: any[] = [];
   trainers: any[] = [];
   students: any[] = [];
+
+  // For the subject form trainer dropdown (now: ALL trainers)
   trainerOptionsForSubject: any[] = [];
 
   // Create Academy form
@@ -81,65 +85,56 @@ export class AdminPanelComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.refreshAll();
-
-    // When academy changes in the subject form, filter trainers for that academy
-    this.createSubjectForm.get('academyId')!.valueChanges.subscribe((aid) => {
-      const academyId = Number(aid) || null;
-      this.trainerOptionsForSubject = academyId
-        ? this.trainers.filter((t) => t.academyId === academyId)
-        : [];
-      // force re-pick trainer when academy changes
-      this.createSubjectForm.get('trainerId')!.reset(null);
-      // enable/disable trainer select
-      const ctrl = this.createSubjectForm.get('trainerId')!;
-      academyId
-        ? ctrl.enable({ emitEvent: false })
-        : ctrl.disable({ emitEvent: false });
+    // If you still want to reset trainer selection when academy changes, keep this:
+    this.createSubjectForm.get('academyId')!.valueChanges.subscribe(() => {
+      // Just reset the chosen trainer; DO NOT filter options anymore.
+      this.createSubjectForm
+        .get('trainerId')!
+        .reset(null, { emitEvent: false });
     });
-    // disable trainer until academy chosen
-    this.createSubjectForm.get('trainerId')!.disable({ emitEvent: false });
+
+    // Do NOT disable the trainer select; it no longer depends on academy
+    this.refreshAll();
   }
 
+  /** Load everything at once */
   refreshAll(): void {
     this.loading.set(true);
 
-    Promise.all([
-      this.academyApi
-        .getAll()
-        .toPromise()
-        .then((x) => (this.academies = x ?? [])),
-      this.subjectApi
-        .getAll()
-        .toPromise()
-        .then((x) => (this.subjects = x ?? [])),
-      this.trainerApi
-        .getAll()
-        .toPromise()
-        .then((x: any[] | undefined) => {
-          this.trainers = (x ?? []).map((t) => ({
-            ...t,
-            subjectIds: Array.isArray(t.subjects)
-              ? t.subjects.map((s: any) => s.id)
-              : t.subjectIds ?? [],
-          }));
-        }),
-      this.studentApi
-        .getAll()
-        .toPromise()
-        .then((x: any[] | undefined) => {
-          this.students = (x ?? []).map((s) => ({
-            ...s,
-            subjectIds: Array.isArray(s.subjects)
-              ? s.subjects.map((sub: any) => sub.id)
-              : s.subjectIds ?? [],
-          }));
-        }),
-    ])
-      .catch((err) =>
-        this.toast(err?.error?.message ?? 'Failed to load data.', 'error')
-      )
-      .finally(() => this.loading.set(false));
+    forkJoin({
+      academies: this.academyApi.getAll(),
+      subjects: this.subjectApi.getAll(),
+      trainers: this.trainerApi.getAll(),
+      students: this.studentApi.getAll(),
+    }).subscribe({
+      next: (res) => {
+        this.academies = res.academies ?? [];
+        this.subjects = res.subjects ?? [];
+
+        const rawTrainers = (res.trainers ?? []) as any[];
+        this.trainers = rawTrainers.map((t) => ({
+          ...t,
+          subjectIds: Array.isArray(t.subjects)
+            ? t.subjects.map((s: any) => s.id)
+            : t.subjectIds ?? [],
+        }));
+
+        const rawStudents = (res.students ?? []) as any[];
+        this.students = rawStudents.map((s) => ({
+          ...s,
+          subjectIds: Array.isArray(s.subjects)
+            ? s.subjects.map((sub: any) => sub.id)
+            : s.subjectIds ?? [],
+        }));
+
+        // SHOW ALL TRAINERS in the subject form dropdown
+        this.trainerOptionsForSubject = this.trainers;
+      },
+      error: (err) => {
+        this.toast(err?.error?.message ?? 'Failed to load data.', 'error');
+      },
+      complete: () => this.loading.set(false),
+    });
   }
 
   // ---------- Create Academy ----------
@@ -212,6 +207,7 @@ export class AdminPanelComponent implements OnInit {
       next: (s) => {
         this.toast('Subject created.');
         this.subjects.unshift(s);
+
         this.createSubjectForm.reset({
           name: '',
           numberOfClasses: 1,
@@ -219,9 +215,9 @@ export class AdminPanelComponent implements OnInit {
           academyId: null,
           trainerId: null,
         });
-        // trainer select disabled until an academy is re-picked
-        this.createSubjectForm.get('trainerId')!.disable({ emitEvent: false });
-        this.trainerOptionsForSubject = [];
+        // keep all-trainers behavior
+        this.trainerOptionsForSubject = this.trainers;
+
         this.createSubjectForm.markAsPristine();
         this.createSubjectForm.markAsUntouched();
         this.createSubjectForm.updateValueAndValidity();
@@ -262,19 +258,13 @@ export class AdminPanelComponent implements OnInit {
     });
   }
 
-  // ---------- Display helpers (for read-only trainer/student sections) ----------
-  /** Get academy name by id (fallback to '#id' if not found) */
+  // ---------- Display helpers ----------
   academyName(id?: number | null): string {
     if (!id) return '—';
-    // fast path via map, fallback to find just in case
     const map = this.academyNameMap();
     return map[id] ?? this.academies.find((a) => a.id === id)?.name ?? '—';
   }
 
-  /**
-   * Subjects taught by a trainer.
-   * Prefer t.subjects if API returns relation; otherwise compute from global subjects (subject.trainerId).
-   */
   trainerSubjectNames = (t: any): string[] => {
     if (Array.isArray(t?.subjects) && t.subjects.length) {
       return t.subjects.map((s: any) => s.name);
