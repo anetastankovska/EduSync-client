@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, tap, switchMap } from 'rxjs';
+import { BASE_URL } from '../util/util';
 
 type Role = 'student' | 'trainer' | 'admin';
 interface RegisterDto {
@@ -17,8 +18,6 @@ type LoginResponse =
   | { access_token: string; role?: string }
   | { accessToken: string; role?: string }
   | { token: string; role?: string };
-
-const BASE_URL = 'http://localhost:4000/api';
 
 function decodeJwt<T = any>(token: string): T | null {
   try {

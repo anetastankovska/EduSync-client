@@ -1,17 +1,17 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-const BASE = 'http://localhost:4000/api';
+import { BASE_URL } from '../util/util';
 
 @Injectable({ providedIn: 'root' })
 export class SubjectApi {
   private http = inject(HttpClient);
 
   getAll() {
-    return this.http.get<any[]>(`${BASE}/subject`);
+    return this.http.get<any[]>(`${BASE_URL}/subject`);
   }
   getByAcademy(academyId: number) {
     const params = new HttpParams().set('academyId', academyId);
-    return this.http.get<any[]>(`${BASE}/subject`, { params });
+    return this.http.get<any[]>(`${BASE_URL}/subject`, { params });
   }
   create(dto: {
     name: string;
@@ -19,9 +19,9 @@ export class SubjectApi {
     difficulty: string;
     academyId: number;
   }) {
-    return this.http.post<any>(`${BASE}/subject`, dto);
+    return this.http.post<any>(`${BASE_URL}/subject`, dto);
   }
   delete(id: number) {
-    return this.http.delete(`${BASE}/subject/${id}`);
+    return this.http.delete(`${BASE_URL}/subject/${id}`);
   }
 }
