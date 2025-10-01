@@ -88,13 +88,43 @@
   <!-- GRADE A STUDENT -->
   <section class="section">
     <h3>Give Feedback to a Student</h3>
+
     <form [formGroup]="gradeForm" (ngSubmit)="submitGrade()" class="form">
+      <!-- SUBJECT (required) -->
+      <mat-form-field appearance="outline">
+        <mat-label>Subject</mat-label>
+        <mat-select formControlName="subjectId" required>
+          <mat-option *ngFor="let s of mySubjects()" [value]="s.id">
+            {{ s.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- STUDENT (populated only after subject is selected) -->
       <mat-form-field appearance="outline">
         <mat-label>Student</mat-label>
-        <mat-select formControlName="studentId">
-          <mat-option *ngFor="let s of students()" [value]="s.id">
-            {{ s.name }} — Academy #{{ s.academyId }}
+        <mat-select
+          formControlName="studentId"
+          [disabled]="!gradeForm.get('subjectId')?.value"
+        >
+          <mat-option
+            *ngIf="!gradeForm.get('subjectId')?.value"
+            [disabled]="true"
+          >
+            Select a subject first
           </mat-option>
+
+          <ng-container *ngIf="gradeForm.get('subjectId')?.value">
+            <mat-option *ngFor="let s of subjectStudents()" [value]="s.id">
+              {{ s.name }} — Academy #{{ s.academyId }}
+            </mat-option>
+            <mat-option
+              *ngIf="subjectStudents().length === 0"
+              [disabled]="true"
+            >
+              No enrolled students for this subject.
+            </mat-option>
+          </ng-container>
         </mat-select>
       </mat-form-field>
 

@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatOptionModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,6 +33,7 @@ type Role = 'student' | 'trainer' | 'admin';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatOptionModule,
     MatDatepickerModule,
     MatNativeDateModule,
     MatButtonModule,
@@ -56,10 +58,13 @@ export class StudentPanelComponent implements OnInit {
   loading = signal(true);
   saving = signal(false);
   reviewing = signal(false);
+  trainerLoading = signal(false);
+
   errorMsg = signal<string | null>(null);
   successMsg = signal<string | null>(null);
 
   studentId!: number;
+
   academy: any | null = null;
   subjects: Array<{
     id: number;
@@ -67,9 +72,11 @@ export class StudentPanelComponent implements OnInit {
     numberOfClasses: number;
     difficulty: string;
   }> = [];
+
+  // NOTE: trainers list now depends on selected subjectId
   trainers: Array<{ id: number; name: string }> = [];
 
-  // Added name to the form
+  // DETAILS FORM (unchanged, but includes name)
   detailForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
     address: ['', [Validators.required, Validators.maxLength(200)]],
@@ -77,8 +84,10 @@ export class StudentPanelComponent implements OnInit {
     dateOfBirth: [null as Date | null, [Validators.required]],
   });
 
+  // REVIEW FORM (mirrors trainer panel pattern)
   reviewForm = this.fb.group({
-    trainerId: [null as number | null, [Validators.required]],
+    subjectId: [null as number | null, [Validators.required]], // required first
+    trainerId: [null as number | null, [Validators.required]], // populated after subject pick
     grade: [
       null as number | null,
       [Validators.required, Validators.min(1), Validators.max(5)],
@@ -94,12 +103,26 @@ export class StudentPanelComponent implements OnInit {
     const payload = token
       ? this.decode<{ sub: number; role?: Role }>(token)
       : null;
+
     if (!payload?.sub || this.auth.role !== 'student') {
       this.errorMsg.set('Not authorized as student.');
       this.loading.set(false);
       return;
     }
+
     this.studentId = Number(payload.sub);
+
+    // React to subject change: clear trainer selection & fetch eligible trainers
+    this.reviewForm.get('subjectId')!.valueChanges.subscribe((subjectId) => {
+      // clear current trainer state
+      this.trainers = [];
+      this.reviewForm.get('trainerId')!.reset(null, { emitEvent: false });
+
+      if (subjectId) {
+        this.loadTrainersForSubject(Number(subjectId));
+      }
+    });
+
     this.loadAll();
   }
 
@@ -108,7 +131,7 @@ export class StudentPanelComponent implements OnInit {
 
     this.studentApi.getMe().subscribe({
       next: (student) => {
-        // keep db id if you use it elsewhere
+        // keep db id if needed
         this.studentId = student.id;
 
         this.detailForm.patchValue({
@@ -121,7 +144,9 @@ export class StudentPanelComponent implements OnInit {
         });
 
         const academyId = student.academyId;
+
         if (!academyId) {
+          // if no academy, clear lists and stop
           this.academy = null;
           this.subjects = [];
           this.trainers = [];
@@ -129,16 +154,24 @@ export class StudentPanelComponent implements OnInit {
           return;
         }
 
-        this.academyApi
-          .getAcademy(academyId)
-          .subscribe({ next: (a) => (this.academy = a) });
-        this.subjectApi
-          .getByAcademy(academyId)
-          .subscribe({ next: (subs) => (this.subjects = subs ?? []) });
-        this.trainerApi.getByAcademy(academyId).subscribe({
-          next: (trs) => (this.trainers = trs ?? []),
+        // academy info
+        this.academyApi.getAcademy(academyId).subscribe({
+          next: (a) => (this.academy = a),
+          error: () => {}, // non-blocking
+        });
+
+        // subjects for this academy (used by the subject picker)
+        this.subjectApi.getByAcademy(academyId).subscribe({
+          next: (subs) => (this.subjects = subs ?? []),
+          error: (err) =>
+            this.toast(
+              err?.error?.message ?? 'Failed to load subjects.',
+              'error'
+            ),
           complete: () => this.loading.set(false),
         });
+
+        // NOTE: do NOT preload trainers here; they now depend on subjectId
       },
       error: (err) => {
         this.toast(
@@ -147,6 +180,20 @@ export class StudentPanelComponent implements OnInit {
         );
         this.loading.set(false);
       },
+    });
+  }
+
+  // Load trainers eligible to be reviewed for the selected subject
+  private loadTrainersForSubject(subjectId: number) {
+    this.trainerLoading.set(true);
+    this.trainerApi.getBySubject(subjectId).subscribe({
+      next: (trs) => (this.trainers = trs ?? []),
+      error: (err) =>
+        this.toast(
+          err?.error?.message ?? 'Failed to load trainers for subject.',
+          'error'
+        ),
+      complete: () => this.trainerLoading.set(false),
     });
   }
 
@@ -163,7 +210,7 @@ export class StudentPanelComponent implements OnInit {
       this.detailForm.getRawValue();
 
     const payload = {
-      name, // <-- send name
+      name,
       address,
       telephone,
       dateOfBirth: this.toIsoDateString(dateOfBirth as Date),
@@ -190,18 +237,26 @@ export class StudentPanelComponent implements OnInit {
     this.errorMsg.set(null);
     this.successMsg.set(null);
 
-    const { trainerId, grade, description } = this.reviewForm.getRawValue();
-    if (!trainerId || !grade) {
+    const { subjectId, trainerId, grade, description } =
+      this.reviewForm.getRawValue();
+
+    if (!subjectId || !trainerId || !grade) {
       this.reviewing.set(false);
       return;
     }
 
+    // Include subjectId so backend can validate trainer is eligible for that subject
     this.reviewApi
-      .createReview(trainerId, { grade, description: description ?? '' })
+      .createReview(trainerId, {
+        subjectId,
+        grade,
+        description: description ?? '',
+      } as any)
       .subscribe({
         next: () => {
           this.successMsg.set('Review submitted.');
-          this.reviewForm.reset();
+          this.reviewForm.reset(); // clears subject/trainer/grade/description
+          this.trainers = []; // clear dependent list until next subject pick
           this.reviewing.set(false);
         },
         error: (err) => {
@@ -232,7 +287,6 @@ export class StudentPanelComponent implements OnInit {
     const dd = String(d.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   }
-
   private toast(
     message: string,
     type: 'success' | 'error' = 'success',

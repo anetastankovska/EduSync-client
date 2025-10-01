@@ -37,4 +37,8 @@ export class TrainerApi {
   setSubjects(id: number, subjectIds: number[]) {
     return this.http.put(`${BASE_URL}/trainer/${id}/subjects`, { subjectIds });
   }
+
+  getBySubject(subjectId: number) {
+    return this.http.get<any[]>(`${BASE_URL}?subjectId=${subjectId}`);
+  }
 }

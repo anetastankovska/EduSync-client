@@ -17,7 +17,7 @@ import { AuthService } from '../../services/auth.service';
 import { StudentApi } from '../../services/student.service';
 import { TrainerApi } from '../../services/trainer.service';
 import { StudentGradeApi } from '../../services/student-grade.service';
-import { SubjectApi } from '../../services/subject.service'; // <-- NEW
+import { SubjectApi } from '../../services/subject.service';
 
 type Role = 'student' | 'trainer' | 'admin';
 
@@ -55,7 +55,7 @@ export class TrainerPanelComponent implements OnInit {
   private trainerApi = inject(TrainerApi);
   private academyApi = inject(AcademyApi);
   private studentApi = inject(StudentApi);
-  private subjectApi = inject(SubjectApi); // <-- NEW
+  private subjectApi = inject(SubjectApi);
   private gradeApi = inject(StudentGradeApi);
   private snack = inject(MatSnackBar);
 
@@ -65,9 +65,13 @@ export class TrainerPanelComponent implements OnInit {
 
   trainerId!: number;
   academy: any | null = null;
-  students = signal<Array<{ id: number; name: string; academyId: number }>>([]);
 
-  // subjects for trainer’s academy
+  // Students ENROLLED to the selected subject (start empty)  // <-- NEW
+  subjectStudents = signal<
+    Array<{ id: number; name: string; academyId: number }>
+  >([]);
+
+  // Subjects for trainer’s academy
   mySubjects = signal<
     Array<{
       id: number;
@@ -75,7 +79,7 @@ export class TrainerPanelComponent implements OnInit {
       numberOfClasses?: number;
       difficulty?: string;
     }>
-  >([]); // <-- NEW
+  >([]);
 
   seniorityOptions = [...SENIORITY_OPTIONS];
 
@@ -86,7 +90,9 @@ export class TrainerPanelComponent implements OnInit {
     seniority: [SENIORITY_OPTIONS[0] as Seniority, [Validators.required]],
   });
 
+  // IMPORTANT: subjectId added and required, student list depends on it // <-- NEW
   gradeForm = this.fb.group({
+    subjectId: [null as number | null, [Validators.required]], // <-- NEW
     studentId: [null as number | null, [Validators.required]],
     grade: [
       null as number | null,
@@ -106,6 +112,14 @@ export class TrainerPanelComponent implements OnInit {
       return;
     }
     this.trainerId = Number(payload.sub);
+
+    // Load students only when subjectId changes/selected                // <-- NEW
+    this.gradeForm.get('subjectId')!.valueChanges.subscribe((subjectId) => {
+      this.subjectStudents.set([]);
+      this.gradeForm.get('studentId')!.reset(null, { emitEvent: false });
+      if (subjectId) this.loadStudentsForSubject(Number(subjectId));
+    });
+
     this.loadAll();
   }
 
@@ -128,25 +142,9 @@ export class TrainerPanelComponent implements OnInit {
             .getAcademy(academyId)
             .subscribe({ next: (a) => (this.academy = a) });
 
-          // students in my academy
-          this.studentApi.getByAcademy(academyId).subscribe({
-            next: (list) => {
-              this.students.set(
-                (list ?? []).map((s: any) => ({
-                  id: s.id,
-                  name: s.name ?? '',
-                  academyId: s.academyId,
-                }))
-              );
-            },
-            error: (err) =>
-              this.toast(
-                err?.error?.message ?? 'Failed to load students.',
-                'error'
-              ),
-          });
+          // DO NOT preload students here (leave empty until a subject is selected)  // <-- REMOVED
 
-          // subjects for my academy (THIS is the change)
+          // Load subjects for my academy
           this.subjectApi.getByAcademy(academyId).subscribe({
             next: (subs) => {
               this.mySubjects.set(
@@ -167,8 +165,8 @@ export class TrainerPanelComponent implements OnInit {
           });
         } else {
           // no academy: clear lists
-          this.students.set([]);
           this.mySubjects.set([]);
+          this.subjectStudents.set([]); // keep empty until subject pick
           this.loading.set(false);
         }
       },
@@ -176,6 +174,27 @@ export class TrainerPanelComponent implements OnInit {
         this.toast(err?.error?.message ?? 'Failed to load trainer.', 'error');
         this.loading.set(false);
       },
+    });
+  }
+
+  // Fetch students ENROLLED to the selected subject                     // <-- NEW
+  private loadStudentsForSubject(subjectId: number) {
+    // backend: GET /student?subjectId=xxx
+    this.studentApi.getBySubject(subjectId).subscribe({
+      next: (list) => {
+        this.subjectStudents.set(
+          (list ?? []).map((s: any) => ({
+            id: s.id,
+            name: s.name ?? '',
+            academyId: s.academyId,
+          }))
+        );
+      },
+      error: (err) =>
+        this.toast(
+          err?.error?.message ?? 'Failed to load students for subject.',
+          'error'
+        ),
     });
   }
 
@@ -206,18 +225,25 @@ export class TrainerPanelComponent implements OnInit {
     }
     this.grading.set(true);
 
-    const { studentId, grade, description } = this.gradeForm.getRawValue();
-    if (!studentId || !grade) {
+    const { studentId, subjectId, grade, description } =
+      this.gradeForm.getRawValue();
+    if (!studentId || !subjectId || !grade) {
       this.grading.set(false);
       return;
     }
 
+    // Send subjectId with payload so the backend can enforce constraints  // <-- NEW
     this.gradeApi
-      .createGrade(studentId, { grade, description: description ?? '' })
+      .createGrade(studentId, {
+        subjectId,
+        grade,
+        description: description ?? '',
+      } as any)
       .subscribe({
         next: () => {
           this.toast('Feedback submitted.');
-          this.gradeForm.reset();
+          this.gradeForm.reset(); // clears subject & students
+          this.subjectStudents.set([]); // clear list until next subject pick
           this.grading.set(false);
         },
         error: (err) => {

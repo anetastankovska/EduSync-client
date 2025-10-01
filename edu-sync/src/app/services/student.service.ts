@@ -35,4 +35,7 @@ export class StudentApi {
   setSubjects(id: number, subjectIds: number[]) {
     return this.http.put(`${BASE_URL}/student/${id}/subjects`, { subjectIds });
   }
+  getBySubject(subjectId: number) {
+    return this.http.get<any[]>(`${BASE_URL}?subjectId=${subjectId}`);
+  }
 }

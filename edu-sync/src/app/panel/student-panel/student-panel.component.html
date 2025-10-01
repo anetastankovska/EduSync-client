@@ -40,16 +40,51 @@
 
   <mat-divider class="sep"></mat-divider>
 
-  <!-- REVIEW TRAINER -->
+  <!-- REVIEW A TRAINER (mirrors trainer-panel flow) -->
   <section class="section">
     <h3>Rate a Trainer</h3>
+
     <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="form">
+      <!-- SUBJECT (required) -->
+      <mat-form-field appearance="outline">
+        <mat-label>Subject</mat-label>
+        <mat-select formControlName="subjectId" required>
+          <mat-option *ngFor="let s of subjects" [value]="s.id">
+            {{ s.name }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- TRAINER (populated only after subject is selected) -->
       <mat-form-field appearance="outline">
         <mat-label>Trainer</mat-label>
-        <mat-select formControlName="trainerId">
-          <mat-option *ngFor="let t of trainers" [value]="t.id">
-            {{ t.name }}
+        <mat-select
+          formControlName="trainerId"
+          [disabled]="!reviewForm.get('subjectId')?.value || trainerLoading()"
+        >
+          <!-- disabled state messages -->
+          <mat-option
+            *ngIf="!reviewForm.get('subjectId')?.value"
+            [disabled]="true"
+          >
+            Select a subject first
           </mat-option>
+
+          <mat-option *ngIf="trainerLoading()" [disabled]="true">
+            Loading…
+          </mat-option>
+
+          <!-- trainers for selected subject -->
+          <ng-container
+            *ngIf="reviewForm.get('subjectId')?.value && !trainerLoading()"
+          >
+            <mat-option *ngFor="let t of trainers" [value]="t.id">
+              {{ t.name }}
+            </mat-option>
+            <mat-option *ngIf="!trainers?.length" [disabled]="true">
+              No trainers for this subject.
+            </mat-option>
+          </ng-container>
         </mat-select>
       </mat-form-field>
 
@@ -72,7 +107,7 @@
         mat-flat-button
         color="accent"
         type="submit"
-        [disabled]="reviewing() || loading()"
+        [disabled]="reviewing() || loading() || trainerLoading()"
       >
         {{ reviewing() ? "Submitting…" : "Submit review" }}
       </button>
