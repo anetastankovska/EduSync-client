@@ -73,10 +73,8 @@ export class StudentPanelComponent implements OnInit {
     difficulty: string;
   }> = [];
 
-  // NOTE: trainers list now depends on selected subjectId
   trainers: Array<{ id: number; name: string }> = [];
 
-  // DETAILS FORM (unchanged, but includes name)
   detailForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
     address: ['', [Validators.required, Validators.maxLength(200)]],
@@ -84,10 +82,9 @@ export class StudentPanelComponent implements OnInit {
     dateOfBirth: [null as Date | null, [Validators.required]],
   });
 
-  // REVIEW FORM (mirrors trainer panel pattern)
   reviewForm = this.fb.group({
-    subjectId: [null as number | null, [Validators.required]], // required first
-    trainerId: [null as number | null, [Validators.required]], // populated after subject pick
+    subjectId: [null as number | null, [Validators.required]],
+    trainerId: [null as number | null, [Validators.required]],
     grade: [
       null as number | null,
       [Validators.required, Validators.min(1), Validators.max(5)],
@@ -114,7 +111,6 @@ export class StudentPanelComponent implements OnInit {
 
     // React to subject change: clear trainer selection & fetch eligible trainers
     this.reviewForm.get('subjectId')!.valueChanges.subscribe((subjectId) => {
-      // clear current trainer state
       this.trainers = [];
       this.reviewForm.get('trainerId')!.reset(null, { emitEvent: false });
 
@@ -131,7 +127,6 @@ export class StudentPanelComponent implements OnInit {
 
     this.studentApi.getMe().subscribe({
       next: (student) => {
-        // keep db id if needed
         this.studentId = student.id;
 
         this.detailForm.patchValue({
@@ -171,7 +166,7 @@ export class StudentPanelComponent implements OnInit {
           complete: () => this.loading.set(false),
         });
 
-        // NOTE: do NOT preload trainers here; they now depend on subjectId
+        // do NOT preload trainers here; they now depend on subjectId
       },
       error: (err) => {
         this.toast(

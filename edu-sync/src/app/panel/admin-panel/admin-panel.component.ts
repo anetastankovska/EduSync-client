@@ -45,10 +45,8 @@ export class AdminPanelComponent implements OnInit {
   private snack = inject(MatSnackBar);
   private dialog = inject(MatDialog);
 
-  // UI state
   loading = signal(true);
 
-  // Data
   academies: any[] = [];
   subjects: any[] = [];
   trainers: any[] = [];
@@ -226,7 +224,7 @@ export class AdminPanelComponent implements OnInit {
           name: student.name,
           email: student.email,
           academyId: student.academyId ?? null,
-          subjectIds, // <-- this drives the preselection
+          subjectIds,
         },
         academies: this.academies.map((a) => ({ id: a.id, name: a.name })),
         subjects: this.subjects.map((s) => ({

@@ -31,7 +31,7 @@ type SubjectLite = { id: number; name: string; academyId: number };
 type ManageStudentData = {
   student: StudentLite;
   academies: AcademyLite[];
-  subjects: SubjectLite[]; // all subjects; we'll filter by academy
+  subjects: SubjectLite[];
 };
 
 @Component({

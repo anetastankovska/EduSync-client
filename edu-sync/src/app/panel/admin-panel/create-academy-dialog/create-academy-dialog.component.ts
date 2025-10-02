@@ -85,7 +85,6 @@ export class CreateAcademyDialogComponent {
           .subscribe({
             next: (updatedTrainer) =>
               this.dialogRef.close({ academy: createdAcademy, updatedTrainer }),
-            // If you want to abort the whole create on trainer error, close with null and rollback on server.
             error: () => this.dialogRef.close({ academy: createdAcademy }),
             complete: () => this.saving.set(false),
           });
