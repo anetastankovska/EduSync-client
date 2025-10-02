@@ -36,6 +36,6 @@ export class StudentApi {
     return this.http.put(`${BASE_URL}/student/${id}/subjects`, { subjectIds });
   }
   getBySubject(subjectId: number) {
-    return this.http.get<any[]>(`${BASE_URL}?subjectId=${subjectId}`);
+    return this.http.get<any[]>(`${BASE_URL}/student?subjectId=${subjectId}`);
   }
 }

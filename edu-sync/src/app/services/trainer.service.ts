@@ -39,6 +39,6 @@ export class TrainerApi {
   }
 
   getBySubject(subjectId: number) {
-    return this.http.get<any[]>(`${BASE_URL}?subjectId=${subjectId}`);
+    return this.http.get<any[]>(`${BASE_URL}/trainer?subjectId=${subjectId}`);
   }
 }

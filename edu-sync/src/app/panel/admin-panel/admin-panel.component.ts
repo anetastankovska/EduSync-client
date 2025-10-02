@@ -25,14 +25,14 @@ import { ManageStudentDialogComponent } from './manage-student-dialog/manage-stu
   standalone: true,
   imports: [
     CommonModule,
-    // Material (only what the panel template uses)
-    MatCardModule,
+    // Material
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
     MatListModule,
     MatSnackBarModule,
     MatDialogModule,
+    MatCardModule,
   ],
   templateUrl: './admin-panel.component.html',
   styleUrls: ['./admin-panel.component.scss'],
@@ -163,7 +163,6 @@ export class AdminPanelComponent implements OnInit {
     });
 
     ref.afterClosed().subscribe((result) => {
-      // result can be { academy, updatedTrainer? }
       if (!result) return;
       const { academy, updatedTrainer } = result;
 
@@ -240,21 +239,7 @@ export class AdminPanelComponent implements OnInit {
 
     ref.afterClosed().subscribe((updated) => {
       if (!updated) return;
-
-      const updatedSubjectIds = Array.isArray(updated.subjects)
-        ? updated.subjects.map((s: any) => s.id)
-        : updated.subjectIds ?? [];
-
-      // Patch local student row so lists refresh immediately
-      this.students = this.students.map((s) =>
-        s.id === updated.id
-          ? {
-              ...s,
-              academyId: updated.academyId ?? null,
-              subjectIds: updatedSubjectIds,
-            }
-          : s
-      );
+      this.refreshAll();
     });
   }
 }
