@@ -1,118 +1,19 @@
 <mat-card>
   <h2>Admin Panel</h2>
 
-  <!-- CREATE ACADEMY -->
-  <section class="section">
-    <h3>Create Academy</h3>
-    <form
-      [formGroup]="createAcademyForm"
-      (ngSubmit)="createAcademy()"
-      class="form"
-    >
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput formControlName="name" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Description</mat-label>
-        <input matInput formControlName="description" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Start date</mat-label>
-        <input matInput [matDatepicker]="sd" formControlName="startDate" />
-        <mat-datepicker-toggle matSuffix [for]="sd"></mat-datepicker-toggle>
-        <mat-datepicker #sd></mat-datepicker>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>End date</mat-label>
-        <input matInput [matDatepicker]="ed" formControlName="endDate" />
-        <mat-datepicker-toggle matSuffix [for]="ed"></mat-datepicker-toggle>
-        <mat-datepicker #ed></mat-datepicker>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Price</mat-label>
-        <input matInput type="number" min="0" formControlName="price" />
-      </mat-form-field>
-
-      <button
-        mat-flat-button
-        color="primary"
-        type="submit"
-        [disabled]="saving() || createAcademyForm.invalid"
-      >
-        {{ saving() ? "Creating…" : "Create academy" }}
+  <mat-card>
+    <div class="toolbar">
+      <button mat-flat-button color="primary" (click)="openCreateAcademy()">
+        <mat-icon>school</mat-icon>
+        Create academy
       </button>
-    </form>
-  </section>
 
-  <mat-divider class="sep"></mat-divider>
-
-  <!-- CREATE SUBJECT -->
-  <section class="section">
-    <h3>Create Subject</h3>
-    <form
-      [formGroup]="createSubjectForm"
-      (ngSubmit)="createSubject()"
-      class="form"
-    >
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput formControlName="name" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Number of classes</mat-label>
-        <input
-          matInput
-          type="number"
-          min="0"
-          formControlName="numberOfClasses"
-        />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Difficulty</mat-label>
-        <mat-select formControlName="difficulty">
-          <mat-option *ngFor="let d of difficultyOptions" [value]="d">
-            {{ d }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Academy</mat-label>
-        <mat-select formControlName="academyId">
-          <mat-option *ngFor="let a of academies" [value]="a.id">
-            {{ a.name }} (ID {{ a.id }})
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Trainer</mat-label>
-        <mat-select formControlName="trainerId">
-          <mat-option *ngFor="let t of trainerOptionsForSubject" [value]="t.id">
-            {{ t.name }} — Academy #{{ t.academyId }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <button
-        mat-flat-button
-        color="primary"
-        type="submit"
-        [disabled]="saving() || createSubjectForm.invalid"
-      >
-        {{ saving() ? "Creating…" : "Create subject" }}
+      <button mat-flat-button color="accent" (click)="openCreateSubject()">
+        <mat-icon>auto_stories</mat-icon>
+        Create subject
       </button>
-    </form>
-  </section>
-
-  <mat-divider class="sep"></mat-divider>
+    </div>
+  </mat-card>
 
   <!-- ACADEMIES LIST -->
   <section class="section">

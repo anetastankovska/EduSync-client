@@ -8,22 +8,8 @@ mat-card {
   display: grid;
   gap: 0.75rem;
 }
-.form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.75rem;
-}
 .sep {
   margin: 0.25rem 0;
-}
-
-.alerts > mat-card.error {
-  background: #ffe6e6;
-  color: #b00020;
-}
-.alerts > mat-card.success {
-  background: #e6ffee;
-  color: #1b5e20;
 }
 
 mat-list-item {
@@ -46,4 +32,11 @@ mat-list-item {
   height: 32px;
   line-height: 32px;
   margin: 0;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }

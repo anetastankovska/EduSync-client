@@ -1,0 +1,64 @@
+<h2 mat-dialog-title>New academy</h2>
+
+<form
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  class="dialog-form"
+  mat-dialog-content
+>
+  <mat-form-field appearance="outline">
+    <mat-label>Name</mat-label>
+    <input matInput formControlName="name" required />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Description</mat-label>
+    <input matInput formControlName="description" required />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Start date</mat-label>
+    <input matInput [matDatepicker]="sd" formControlName="startDate" required />
+    <mat-datepicker-toggle matSuffix [for]="sd"></mat-datepicker-toggle>
+    <mat-datepicker #sd></mat-datepicker>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>End date</mat-label>
+    <input matInput [matDatepicker]="ed" formControlName="endDate" required />
+    <mat-datepicker-toggle matSuffix [for]="ed"></mat-datepicker-toggle>
+    <mat-datepicker #ed></mat-datepicker>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Price</mat-label>
+    <input matInput type="number" min="0" formControlName="price" required />
+  </mat-form-field>
+
+  <!-- REQUIRED trainer assignment -->
+  <mat-form-field appearance="outline">
+    <mat-label>Assign trainer</mat-label>
+    <mat-select formControlName="trainerId" required>
+      <mat-option *ngFor="let t of data?.trainers || []" [value]="t.id">
+        {{ t.name }} (current: Academy {{ t.academyId ?? "—" }})
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="form.get('trainerId')?.hasError('required')">
+      Trainer is required
+    </mat-error>
+  </mat-form-field>
+
+  <div mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="close()" [disabled]="saving()">
+      Cancel
+    </button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="submit"
+      [disabled]="saving() || form.invalid"
+    >
+      {{ saving() ? "Creating…" : "Create academy" }}
+    </button>
+  </div>
+</form>
