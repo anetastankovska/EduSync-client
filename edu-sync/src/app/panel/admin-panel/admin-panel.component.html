@@ -42,7 +42,7 @@
         mat-flat-button
         color="primary"
         type="submit"
-        [disabled]="saving()"
+        [disabled]="saving() || createAcademyForm.invalid"
       >
         {{ saving() ? "Creating…" : "Create academy" }}
       </button>
@@ -105,7 +105,7 @@
         mat-flat-button
         color="primary"
         type="submit"
-        [disabled]="saving()"
+        [disabled]="saving() || createSubjectForm.invalid"
       >
         {{ saving() ? "Creating…" : "Create subject" }}
       </button>
