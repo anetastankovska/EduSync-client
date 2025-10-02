@@ -212,23 +212,49 @@ export class AdminPanelComponent implements OnInit {
     });
   }
 
-  openManageStudent(student: any): void {
+  openManageStudent(student: any) {
+    // Ensure the student object has subjectIds (numbers):
+    const subjectIds = Array.isArray(student.subjects)
+      ? student.subjects.map((sub: any) => sub.id)
+      : student.subjectIds ?? [];
+
     const ref = this.dialog.open(ManageStudentDialogComponent, {
       width: '700px',
       disableClose: true,
       data: {
-        student,
-        academies: this.academies,
-        subjects: this.subjects, // all subjects; dialog filters by academy
+        student: {
+          id: student.id,
+          name: student.name,
+          email: student.email,
+          academyId: student.academyId ?? null,
+          subjectIds, // <-- this drives the preselection
+        },
+        academies: this.academies.map((a) => ({ id: a.id, name: a.name })),
+        subjects: this.subjects.map((s) => ({
+          id: s.id,
+          name: s.name,
+          academyId: s.academyId,
+        })),
       },
     });
 
     ref.afterClosed().subscribe((updated) => {
       if (!updated) return;
+
+      const updatedSubjectIds = Array.isArray(updated.subjects)
+        ? updated.subjects.map((s: any) => s.id)
+        : updated.subjectIds ?? [];
+
+      // Patch local student row so lists refresh immediately
       this.students = this.students.map((s) =>
-        s.id === updated.id ? { ...s, ...updated } : s
+        s.id === updated.id
+          ? {
+              ...s,
+              academyId: updated.academyId ?? null,
+              subjectIds: updatedSubjectIds,
+            }
+          : s
       );
-      this.toast('Student enrollment updated.');
     });
   }
 }
