@@ -18,6 +18,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { CreateSubjectDialogComponent } from './create-subject-dialog/create-subject-dialog.component';
 import { CreateAcademyDialogComponent } from './create-academy-dialog/create-academy-dialog.component';
+import { ManageStudentDialogComponent } from './manage-student-dialog/manage-student-dialog.component';
 
 @Component({
   selector: 'app-admin-panel',
@@ -208,6 +209,26 @@ export class AdminPanelComponent implements OnInit {
       horizontalPosition: 'right',
       verticalPosition: 'bottom',
       panelClass: type === 'success' ? ['snack-success'] : ['snack-error'],
+    });
+  }
+
+  openManageStudent(student: any): void {
+    const ref = this.dialog.open(ManageStudentDialogComponent, {
+      width: '700px',
+      disableClose: true,
+      data: {
+        student,
+        academies: this.academies,
+        subjects: this.subjects, // all subjects; dialog filters by academy
+      },
+    });
+
+    ref.afterClosed().subscribe((updated) => {
+      if (!updated) return;
+      this.students = this.students.map((s) =>
+        s.id === updated.id ? { ...s, ...updated } : s
+      );
+      this.toast('Student enrollment updated.');
     });
   }
 }

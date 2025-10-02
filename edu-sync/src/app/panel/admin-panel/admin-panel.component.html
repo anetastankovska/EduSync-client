@@ -105,6 +105,14 @@
           >
             <mat-icon>delete</mat-icon>
           </button>
+          <button
+            mat-icon-button
+            color="primary"
+            (click)="openManageStudent(s)"
+            aria-label="Manage"
+          >
+            <mat-icon>edit</mat-icon>
+          </button>
         </span>
         <div matListItemTitle>{{ s.name || "—" }}</div>
         <div matListItemLine>

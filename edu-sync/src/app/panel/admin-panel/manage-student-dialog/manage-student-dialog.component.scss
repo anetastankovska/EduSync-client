@@ -1,0 +1,21 @@
+.dialog-form {
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.who .name {
+  font-weight: 600;
+}
+.who .email {
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+.hint {
+  opacity: 0.75;
+  font-size: 0.85rem;
+}
