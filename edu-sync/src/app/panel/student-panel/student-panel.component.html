@@ -51,6 +51,7 @@
     <!-- ACADEMY & SUBJECTS -->
     <section class="section">
       <h3>My Academy</h3>
+
       <div *ngIf="academy; else noAcad" class="academy">
         <div class="row">
           <div>
@@ -72,6 +73,7 @@
           </mat-list-item>
         </mat-list>
       </div>
+
       <ng-template #noAcad>
         <p>No academy assigned.</p>
       </ng-template>
@@ -95,11 +97,20 @@
 
         <mat-form-field appearance="outline" class="col-6">
           <mat-label>Trainer</mat-label>
-          <mat-select
-            formControlName="trainerId"
-            [disabled]="!reviewForm.get('subjectId')?.value || trainerLoading()"
-          >
-            <!-- options... -->
+          <!-- disabled state controlled by FormControl; no [disabled] binding -->
+          <mat-select formControlName="trainerId">
+            <mat-option *ngIf="trainerLoading()" [disabled]="true"
+              >Loading…</mat-option
+            >
+
+            <ng-container *ngIf="!trainerLoading()">
+              <mat-option *ngFor="let t of trainers" [value]="t.id">{{
+                t.name
+              }}</mat-option>
+              <mat-option *ngIf="!trainers?.length" [disabled]="true">
+                No trainers for this subject.
+              </mat-option>
+            </ng-container>
           </mat-select>
         </mat-form-field>
 
@@ -128,6 +139,37 @@
           {{ reviewing() ? "Submitting…" : "Submit" }}
         </button>
       </form>
+    </section>
+
+    <mat-divider class="sep"></mat-divider>
+
+    <!-- RECEIVED FEEDBACKS -->
+    <section class="section">
+      <h3>Received feedbacks</h3>
+
+      <ng-container *ngIf="gradeRows?.length; else noGrades">
+        <mat-list>
+          <mat-list-item *ngFor="let g of gradeRows">
+            <div matListItemTitle>
+              <strong>{{ g.subjectName }}</strong>
+              &nbsp;•&nbsp;
+              <span
+                >Grade: <b>{{ g.grade }}</b></span
+              >
+            </div>
+            <div matListItemLine>
+              by {{ g.trainerName }} — {{ g.createdAt | date : "mediumDate" }}
+            </div>
+            <div matListItemLine *ngIf="g.description">
+              “{{ g.description }}”
+            </div>
+          </mat-list-item>
+        </mat-list>
+      </ng-container>
+
+      <ng-template #noGrades>
+        <p>No feedback received yet.</p>
+      </ng-template>
     </section>
   </mat-card>
 </div>

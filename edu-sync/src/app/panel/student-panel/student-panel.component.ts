@@ -75,6 +75,30 @@ export class StudentPanelComponent implements OnInit {
 
   trainers: Array<{ id: number; name: string }> = [];
 
+  /** ===== grades state ===== */
+  studentGrades: Array<{
+    id: number;
+    grade: number;
+    description?: string;
+    studentId: number;
+    trainerId: number;
+    subjectId: number;
+    createdAt: string;
+  }> = [];
+
+  private subjectById = new Map<number, { id: number; name: string }>();
+  private trainerNameById = new Map<number, string>();
+
+  gradeRows: Array<{
+    id: number;
+    grade: number;
+    subjectName: string;
+    trainerName: string;
+    description?: string;
+    createdAt: Date;
+  }> = [];
+  /** ======================== */
+
   detailForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(100)]],
     address: ['', [Validators.required, Validators.maxLength(200)]],
@@ -84,7 +108,11 @@ export class StudentPanelComponent implements OnInit {
 
   reviewForm = this.fb.group({
     subjectId: [null as number | null, [Validators.required]],
-    trainerId: [null as number | null, [Validators.required]],
+    // IMPORTANT: manage disabled via FormControl (no [disabled] in template)
+    trainerId: [
+      { value: null as number | null, disabled: true },
+      [Validators.required],
+    ],
     grade: [
       null as number | null,
       [Validators.required, Validators.min(1), Validators.max(5)],
@@ -109,13 +137,18 @@ export class StudentPanelComponent implements OnInit {
 
     this.studentId = Number(payload.sub);
 
-    // React to subject change: clear trainer selection & fetch eligible trainers
-    this.reviewForm.get('subjectId')!.valueChanges.subscribe((subjectId) => {
-      this.trainers = [];
-      this.reviewForm.get('trainerId')!.reset(null, { emitEvent: false });
+    // React to subject change: load eligible trainers & enable the select
+    const subjectCtrl = this.reviewForm.get('subjectId')!;
+    const trainerCtrl = this.reviewForm.get('trainerId')!;
 
+    subjectCtrl.valueChanges.subscribe((subjectId) => {
+      this.trainers = [];
+      trainerCtrl.reset(null, { emitEvent: false });
       if (subjectId) {
+        trainerCtrl.disable({ emitEvent: false }); // keep disabled while loading
         this.loadTrainersForSubject(Number(subjectId));
+      } else {
+        trainerCtrl.disable({ emitEvent: false });
       }
     });
 
@@ -141,32 +174,40 @@ export class StudentPanelComponent implements OnInit {
         const academyId = student.academyId;
 
         if (!academyId) {
-          // if no academy, clear lists and stop
           this.academy = null;
           this.subjects = [];
           this.trainers = [];
+          this.studentGrades = [];
+          this.gradeRows = [];
           this.loading.set(false);
           return;
         }
 
-        // academy info
+        // academy (non-blocking)
         this.academyApi.getAcademy(academyId).subscribe({
           next: (a) => (this.academy = a),
-          error: () => {}, // non-blocking
+          error: () => {},
         });
 
-        // subjects for this academy (used by the subject picker)
+        // subjects (for subjectId -> name mapping)
         this.subjectApi.getByAcademy(academyId).subscribe({
-          next: (subs) => (this.subjects = subs ?? []),
-          error: (err) =>
+          next: (subs) => {
+            this.subjects = subs ?? [];
+            this.subjectById.clear();
+            for (const s of this.subjects)
+              this.subjectById.set(s.id, { id: s.id, name: s.name });
+
+            // after subjects known, load student with grades
+            this.loadStudentWithGrades(this.studentId);
+          },
+          error: (err) => {
             this.toast(
               err?.error?.message ?? 'Failed to load subjects.',
               'error'
-            ),
-          complete: () => this.loading.set(false),
+            );
+            this.loading.set(false);
+          },
         });
-
-        // do NOT preload trainers here; they now depend on subjectId
       },
       error: (err) => {
         this.toast(
@@ -178,16 +219,86 @@ export class StudentPanelComponent implements OnInit {
     });
   }
 
-  // Load trainers eligible to be reviewed for the selected subject
+  /** fetch student (with grades) and build rows */
+  private loadStudentWithGrades(studentId: number) {
+    this.studentApi.getStudent(studentId).subscribe({
+      next: (payload) => {
+        this.studentGrades = payload?.studentGrades ?? [];
+        this.preloadTrainerNames(this.studentGrades.map((g) => g.trainerId));
+        this.rebuildGradeRows();
+      },
+      error: () => {
+        this.rebuildGradeRows();
+      },
+      complete: () => this.loading.set(false),
+    });
+  }
+
+  /** best-effort preload of trainer names; uses TrainerApi.getTrainer(id) if available */
+  private preloadTrainerNames(trainerIds: number[]) {
+    const unique = Array.from(new Set(trainerIds)).filter(
+      (id) => !this.trainerNameById.has(id)
+    );
+    if (!unique.length) return;
+
+    for (const id of unique) {
+      // placeholder now
+      this.trainerNameById.set(id, `Trainer #${id}`);
+
+      const maybeGet: any = (this.trainerApi as any)?.getTrainer;
+      if (typeof maybeGet === 'function') {
+        maybeGet.call(this.trainerApi, id).subscribe({
+          next: (t: any) => {
+            if (t?.name) this.trainerNameById.set(id, t.name);
+            this.rebuildGradeRows();
+          },
+          error: () => {},
+        });
+      }
+    }
+  }
+
+  /** compose rows for display (newest first) */
+  private rebuildGradeRows() {
+    this.gradeRows = (this.studentGrades ?? [])
+      .map((g) => {
+        const subjectName =
+          this.subjectById.get(g.subjectId)?.name ?? `Subject #${g.subjectId}`;
+        const trainerName =
+          this.trainerNameById.get(g.trainerId) ?? `Trainer #${g.trainerId}`;
+        return {
+          id: g.id,
+          grade: g.grade,
+          subjectName,
+          trainerName,
+          description: g.description,
+          createdAt: this.toDate(g.createdAt),
+        };
+      })
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  // Load trainers for selected subject; re-enable control when loaded
   private loadTrainersForSubject(subjectId: number) {
     this.trainerLoading.set(true);
+    const trainerCtrl = this.reviewForm.get('trainerId')!;
+
     this.trainerApi.getBySubject(subjectId).subscribe({
-      next: (trs) => (this.trainers = trs ?? []),
-      error: (err) =>
+      next: (trs) => {
+        this.trainers = trs ?? [];
+        if (this.reviewForm.get('subjectId')!.value) {
+          trainerCtrl.enable({ emitEvent: false });
+        } else {
+          trainerCtrl.disable({ emitEvent: false });
+        }
+      },
+      error: (err) => {
         this.toast(
           err?.error?.message ?? 'Failed to load trainers for subject.',
           'error'
-        ),
+        );
+        trainerCtrl.disable({ emitEvent: false });
+      },
       complete: () => this.trainerLoading.set(false),
     });
   }
@@ -240,7 +351,6 @@ export class StudentPanelComponent implements OnInit {
       return;
     }
 
-    // Include subjectId so backend can validate trainer is eligible for that subject
     this.reviewApi
       .createReview(trainerId, {
         subjectId,
@@ -250,9 +360,13 @@ export class StudentPanelComponent implements OnInit {
       .subscribe({
         next: () => {
           this.successMsg.set('Review submitted.');
-          this.reviewForm.reset(); // clears subject/trainer/grade/description
-          this.trainers = []; // clear dependent list until next subject pick
+          this.reviewForm.reset();
+          // keep trainer select disabled until a new subject is chosen
+          this.reviewForm.get('trainerId')!.disable({ emitEvent: false });
+          this.trainers = [];
           this.reviewing.set(false);
+          // refresh received feedbacks
+          this.loadStudentWithGrades(this.studentId);
         },
         error: (err) => {
           this.toast(

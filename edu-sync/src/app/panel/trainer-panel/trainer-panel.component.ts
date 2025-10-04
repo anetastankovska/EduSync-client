@@ -66,7 +66,7 @@ export class TrainerPanelComponent implements OnInit {
   trainerId!: number;
   academy: any | null = null;
 
-  // Students ENROLLED to the selected subject (start empty)  // <-- NEW
+  // Students enrolled to the selected subject
   subjectStudents = signal<
     Array<{ id: number; name: string; academyId: number }>
   >([]);
@@ -83,6 +83,30 @@ export class TrainerPanelComponent implements OnInit {
 
   seniorityOptions = [...SENIORITY_OPTIONS];
 
+  // ===== Received feedbacks state (for the trainer) =====
+  trainerReviews: Array<{
+    id: number;
+    grade: number;
+    description?: string;
+    trainerId: number;
+    subjectId: number;
+    studentId: number;
+    createdAt: string;
+  }> = [];
+
+  private subjectById = new Map<number, { id: number; name: string }>();
+  private studentNameById = new Map<number, string>();
+
+  reviewRows: Array<{
+    id: number;
+    grade: number;
+    subjectName: string;
+    studentName: string;
+    description?: string;
+    createdAt: Date;
+  }> = [];
+  // ======================================================
+
   detailForm = this.fb.group({
     name: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
@@ -90,9 +114,9 @@ export class TrainerPanelComponent implements OnInit {
     seniority: [SENIORITY_OPTIONS[0] as Seniority, [Validators.required]],
   });
 
-  // IMPORTANT: subjectId added and required, student list depends on it // <-- NEW
+  // Subject required; students depend on it
   gradeForm = this.fb.group({
-    subjectId: [null as number | null, [Validators.required]], // <-- NEW
+    subjectId: [null as number | null, [Validators.required]],
     studentId: [null as number | null, [Validators.required]],
     grade: [
       null as number | null,
@@ -106,14 +130,14 @@ export class TrainerPanelComponent implements OnInit {
     const payload = token
       ? this.decode<{ sub: number; role?: Role }>(token)
       : null;
+
     if (!payload?.sub || this.auth.role !== 'trainer') {
       this.toast('Not authorized as trainer.', 'error');
       this.loading.set(false);
       return;
     }
-    this.trainerId = Number(payload.sub);
 
-    // Load students only when subjectId changes/selected                // <-- NEW
+    // Load students when subject changes
     this.gradeForm.get('subjectId')!.valueChanges.subscribe((subjectId) => {
       this.subjectStudents.set([]);
       this.gradeForm.get('studentId')!.reset(null, { emitEvent: false });
@@ -128,6 +152,7 @@ export class TrainerPanelComponent implements OnInit {
 
     this.trainerApi.getMe().subscribe({
       next: (trainer) => {
+        this.trainerId = trainer.id;
         this.detailForm.patchValue({
           name: trainer.name ?? '',
           email: trainer.email ?? '',
@@ -138,35 +163,45 @@ export class TrainerPanelComponent implements OnInit {
         const academyId = trainer.academyId;
         if (academyId) {
           // academy card
-          this.academyApi
-            .getAcademy(academyId)
-            .subscribe({ next: (a) => (this.academy = a) });
+          this.academyApi.getAcademy(academyId).subscribe({
+            next: (a) => (this.academy = a),
+            error: () => {},
+          });
 
-          // DO NOT preload students here (leave empty until a subject is selected)  // <-- REMOVED
-
-          // Load subjects for my academy
+          // Load subjects for my academy (and create subject map for review rendering)
           this.subjectApi.getByAcademy(academyId).subscribe({
             next: (subs) => {
-              this.mySubjects.set(
-                (subs ?? []).map((s: any) => ({
-                  id: s.id,
-                  name: s.name,
-                  numberOfClasses: s.numberOfClasses,
-                  difficulty: s.difficulty,
-                }))
-              );
+              const list = (subs ?? []).map((s: any) => ({
+                id: s.id,
+                name: s.name,
+                numberOfClasses: s.numberOfClasses,
+                difficulty: s.difficulty,
+              }));
+              this.mySubjects.set(list);
+
+              this.subjectById.clear();
+              for (const s of list)
+                this.subjectById.set(s.id, { id: s.id, name: s.name });
+
+              // After subjects are known, load trainer with reviews to render feedback list
+              this.loadTrainerWithReviews(this.trainerId);
             },
-            error: (err) =>
+            error: (err) => {
               this.toast(
                 err?.error?.message ?? 'Failed to load subjects.',
                 'error'
-              ),
+              );
+              // Still try to load reviews; subject names may show as "Subject #id"
+              this.loadTrainerWithReviews(this.trainerId);
+            },
             complete: () => this.loading.set(false),
           });
         } else {
           // no academy: clear lists
           this.mySubjects.set([]);
-          this.subjectStudents.set([]); // keep empty until subject pick
+          this.subjectStudents.set([]);
+          // Still show reviews for trainer (if any)
+          this.loadTrainerWithReviews(this.trainerId);
           this.loading.set(false);
         }
       },
@@ -177,7 +212,76 @@ export class TrainerPanelComponent implements OnInit {
     });
   }
 
-  // Fetch students ENROLLED to the selected subject                     // <-- NEW
+  /** Fetch trainer (with trainerReviews), then map & build rows */
+  private loadTrainerWithReviews(trainerId: number) {
+    this.trainerApi.getTrainer(trainerId).subscribe({
+      next: (payload) => {
+        this.trainerReviews = payload?.trainerReviews ?? [];
+
+        // If response also carries trainer.subjects, merge them into subject map (fallback)
+        const respSubjects: Array<any> = payload?.subjects ?? [];
+        for (const s of respSubjects) {
+          if (!this.subjectById.has(s.id))
+            this.subjectById.set(s.id, { id: s.id, name: s.name });
+        }
+
+        // Preload student names (best-effort)
+        this.preloadStudentNames(this.trainerReviews.map((r) => r.studentId));
+        this.rebuildReviewRows();
+      },
+      error: () => {
+        this.rebuildReviewRows();
+      },
+    });
+  }
+
+  /** Best-effort preload of student names via StudentApi.getStudent(id) */
+  private preloadStudentNames(studentIds: number[]) {
+    const unique = Array.from(new Set(studentIds)).filter(
+      (id) => !this.studentNameById.has(id)
+    );
+    if (!unique.length) return;
+
+    for (const id of unique) {
+      // placeholder immediately
+      this.studentNameById.set(id, `Student #${id}`);
+
+      const maybeGet: any = (this.studentApi as any)?.getStudent;
+      if (typeof maybeGet === 'function') {
+        maybeGet.call(this.studentApi, id).subscribe({
+          next: (s: any) => {
+            if (s?.name) this.studentNameById.set(id, s.name);
+            this.rebuildReviewRows();
+          },
+          error: () => {
+            /* keep placeholder */
+          },
+        });
+      }
+    }
+  }
+
+  /** Build rows for rendering (newest first) */
+  private rebuildReviewRows() {
+    this.reviewRows = (this.trainerReviews ?? [])
+      .map((r) => {
+        const subjectName =
+          this.subjectById.get(r.subjectId)?.name ?? `Subject #${r.subjectId}`;
+        const studentName =
+          this.studentNameById.get(r.studentId) ?? `Student #${r.studentId}`;
+        return {
+          id: r.id,
+          grade: r.grade,
+          subjectName,
+          studentName,
+          description: r.description,
+          createdAt: new Date(r.createdAt),
+        };
+      })
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  // Fetch students enrolled to the selected subject
   private loadStudentsForSubject(subjectId: number) {
     // backend: GET /student?subjectId=xxx
     this.studentApi.getBySubject(subjectId).subscribe({
@@ -232,7 +336,7 @@ export class TrainerPanelComponent implements OnInit {
       return;
     }
 
-    // Send subjectId with payload so the backend can enforce constraints  // <-- NEW
+    // Include subjectId so backend can enforce constraints
     this.gradeApi
       .createGrade(studentId, {
         subjectId,
@@ -242,9 +346,12 @@ export class TrainerPanelComponent implements OnInit {
       .subscribe({
         next: () => {
           this.toast('Feedback submitted.');
-          this.gradeForm.reset(); // clears subject & students
-          this.subjectStudents.set([]); // clear list until next subject pick
+          this.gradeForm.reset();
+          this.subjectStudents.set([]);
           this.grading.set(false);
+
+          // Optional: refresh received feedbacks after submitting
+          this.loadTrainerWithReviews(this.trainerId);
         },
         error: (err) => {
           this.toast(

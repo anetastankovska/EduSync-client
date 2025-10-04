@@ -164,5 +164,38 @@
         </button>
       </form>
     </section>
+
+    <mat-divider class="sep"></mat-divider>
+
+    <!-- RECEIVED FEEDBACKS (for the trainer) -->
+    <section class="section">
+      <h3>Received feedbacks</h3>
+
+      <ng-container *ngIf="reviewRows?.length; else noReviews">
+        <mat-list>
+          <mat-list-item *ngFor="let r of reviewRows">
+            <div matListItemTitle>
+              <strong>{{ r.subjectName }}</strong>
+              &nbsp;•&nbsp;
+              <span
+                >Grade: <b>{{ r.grade }}</b></span
+              >
+            </div>
+
+            <div matListItemLine>
+              from {{ r.studentName }} — {{ r.createdAt | date : "mediumDate" }}
+            </div>
+
+            <div matListItemLine *ngIf="r.description">
+              “{{ r.description }}”
+            </div>
+          </mat-list-item>
+        </mat-list>
+      </ng-container>
+
+      <ng-template #noReviews>
+        <p>No feedback received yet.</p>
+      </ng-template>
+    </section>
   </mat-card>
 </div>
