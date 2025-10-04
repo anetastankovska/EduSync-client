@@ -20,6 +20,8 @@
 
   <a mat-button routerLink="/programs" routerLinkActive="active">Programs</a>
 
+  <a mat-button routerLink="/contact" routerLinkActive="active">Contact</a>
+
   <!-- When NOT logged in -->
   <ng-container *ngIf="!(isLoggedIn$ | async); else loggedIn">
     <a mat-button routerLink="/register" routerLinkActive="active">Register</a>

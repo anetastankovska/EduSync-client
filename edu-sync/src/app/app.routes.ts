@@ -24,6 +24,18 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./programs/programs.component').then((m) => m.ProgramsComponent),
   },
+  {
+    path: 'programs/quiz',
+    loadComponent: () =>
+      import('./programs/interest-quiz/interest-quiz.component').then(
+        (m) => m.InterestQuizComponent
+      ),
+  },
+  {
+    path: 'contact',
+    loadComponent: () =>
+      import('./contact/contact.component').then((m) => m.ContactComponent),
+  },
 
   // Generic panel entry → redirects by role
   {

@@ -1,0 +1,56 @@
+<mat-card>
+  <h1>Discover the program that fits most for you</h1>
+  @if (!finished) {
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    @for (q of quiz; track q.key) {
+    <div>
+      <label>{{ q.question }}</label>
+      <ng-container [ngSwitch]="q.type">
+        <mat-radio-group
+          *ngSwitchCase="'radio'"
+          [formControlName]="q.key"
+          class="quiz-radio"
+        >
+          @for (opt of q.options; track opt) {
+          <mat-radio-button [value]="opt">{{ opt }}</mat-radio-button>
+          }
+        </mat-radio-group>
+        <div *ngSwitchCase="'checkbox'">
+          @for (opt of q.options; track opt) {
+          <mat-checkbox
+            [checked]="form.value[q.key]?.includes(opt)"
+            (change)="onCheckboxChange($event, q.key, opt)"
+          >
+            {{ opt }}
+          </mat-checkbox>
+          }
+        </div>
+      </ng-container>
+      <br /><br />
+    </div>
+    }
+    <button
+      mat-flat-button
+      color="primary"
+      type="submit"
+      [disabled]="form.invalid"
+    >
+      Show Recommendation
+    </button>
+  </form>
+  } @if (finished) {
+  <h2>Recommended Program{{ recommended.length > 1 ? "s" : "" }}:</h2>
+  @for (prog of recommended; track prog.id) {
+  <mat-card class="program-result">
+    <mat-card-title>{{ prog.title }}</mat-card-title>
+    <mat-card-content>
+      <p>{{ prog.description }}</p>
+      <div><b>Topics:</b> {{ prog.topics.join(", ") }}</div>
+    </mat-card-content>
+  </mat-card>
+  }
+  <button mat-stroked-button color="primary" (click)="reset()">
+    Take Again
+  </button>
+  }
+</mat-card>

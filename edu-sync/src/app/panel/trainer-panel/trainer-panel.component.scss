@@ -1,33 +1,139 @@
-mat-card {
-  display: grid;
-  gap: 1rem;
-  padding: 1rem;
+/* Material M3 tokens so it follows your Azure theme */
+:host {
+  --surface: var(--md-sys-color-surface);
+  --surface-container: var(--md-sys-color-surface-container-low);
+  --on-surface: var(--md-sys-color-on-surface);
+  --outline: var(--md-sys-color-outline);
+
+  --radius: 14px;
+  --gap: 16px;
 }
 
+/* Center whole page */
+.page-center {
+  min-height: calc(100dvh - 64px);
+  display: grid;
+  place-items: start center;
+  padding: 24px 16px;
+  background: var(--surface-container);
+}
+
+/* Main card */
+.panel {
+  width: 100%;
+  max-width: 1040px;
+  background: var(--surface);
+  color: var(--on-surface);
+  border: 1px solid color-mix(in oklab, var(--outline) 60%, transparent);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 1px color-mix(in oklab, var(--on-surface) 8%, transparent),
+    0 8px 18px color-mix(in oklab, var(--on-surface) 7%, transparent);
+  display: grid;
+  gap: var(--gap);
+  padding: 20px;
+}
+
+/* Sections */
 .section {
   display: grid;
-  gap: 0.75rem;
+  gap: 12px;
+}
+.sep {
+  margin: 4px 0;
 }
 
-.form {
+/* Details block (top form) */
+.details-wrap {
+  background: var(--surface-container);
+  border: 1px solid color-mix(in oklab, var(--outline) 60%, transparent);
+  border-radius: 12px;
+  padding: 12px;
+}
+.section-title {
+  margin: 8px 8px 0;
+  font-size: clamp(1.25rem, 1.1rem + 0.8vw, 1.75rem);
+  font-weight: 800;
+}
+.details-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px 16px;
+  padding: 8px;
 
-  .full {
+  .field {
+    width: 100%;
+  }
+  .col-12 {
+    grid-column: span 12;
+  }
+  .col-6 {
+    grid-column: span 6;
+  }
+  .col-3 {
+    grid-column: span 3;
+  }
+
+  .actions {
     grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
   }
 }
 
-.sep {
-  margin: 0.25rem 0;
+/* Review/feedback form – 12-col grid like on Student page */
+.form {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px 16px;
+
+  mat-form-field {
+    width: 100%;
+  }
+  .col-6 {
+    grid-column: span 6;
+  } /* Subject, Student */
+  .col-3 {
+    grid-column: span 3;
+  } /* Grade (will be narrower) */
+  .full {
+    grid-column: 1 / -1;
+  } /* Comment full width */
+
+  /* Make the submit button wide & aligned like Student page */
+  button[mat-flat-button] {
+    grid-column: 10 / -1; /* last 3 cols on desktop */
+    justify-self: end;
+    min-width: 220px;
+    height: 44px;
+    padding: 0 20px;
+    font-weight: 700;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
 }
 
-.alerts > mat-card.error {
-  background: #ffe6e6;
-  color: #b00020;
+/* Responsive */
+@media (max-width: 1024px) {
+  .details-form .col-3 {
+    grid-column: span 6;
+  }
 }
-.alerts > mat-card.success {
-  background: #e6ffee;
-  color: #1b5e20;
+@media (max-width: 640px) {
+  .panel {
+    padding: 16px;
+  }
+  .details-form .col-6,
+  .details-form .col-3,
+  .details-form .col-12 {
+    grid-column: span 12;
+  }
+
+  .form {
+    grid-template-columns: 1fr;
+  }
+  .form button[mat-flat-button] {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-self: stretch;
+  }
 }

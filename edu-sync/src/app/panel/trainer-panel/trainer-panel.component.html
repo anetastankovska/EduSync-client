@@ -1,156 +1,168 @@
-<mat-card>
-  <h2>Trainer Panel</h2>
+<div class="page-center">
+  <mat-card class="panel">
+    <h2>Trainer Panel</h2>
 
-  <!-- DETAILS -->
-  <section class="section">
-    <h3>My Details</h3>
+    <!-- DETAILS -->
+    <section class="details-wrap">
+      <h3 class="section-title">My Details</h3>
 
-    <form [formGroup]="detailForm" (ngSubmit)="saveDetails()" class="form">
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput formControlName="name" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Email</mat-label>
-        <input matInput formControlName="email" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Age</mat-label>
-        <input matInput type="number" min="18" formControlName="age" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Seniority</mat-label>
-        <mat-select formControlName="seniority">
-          <mat-option *ngFor="let s of seniorityOptions" [value]="s">{{
-            s
-          }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <button
-        mat-flat-button
-        color="primary"
-        type="submit"
-        [disabled]="saving() || loading()"
+      <form
+        [formGroup]="detailForm"
+        (ngSubmit)="saveDetails()"
+        class="details-form"
       >
-        {{ saving() ? "Saving…" : "Save details" }}
-      </button>
-    </form>
-  </section>
+        <mat-form-field appearance="outline" class="field col-6">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
 
-  <mat-divider class="sep"></mat-divider>
+        <mat-form-field appearance="outline" class="field col-6">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" />
+        </mat-form-field>
 
-  <!-- ACADEMY -->
-  <section class="section">
-    <h3>My Academy</h3>
-    <div *ngIf="academy; else noAcad" class="academy">
-      <div>
-        <strong>{{ academy.name }}</strong>
-      </div>
-      <div>{{ academy.description }}</div>
-      <div>Start: {{ academy.startDate | date }}</div>
-      <div>End: {{ academy.endDate | date }}</div>
-      <div>Price: {{ academy.price | currency }}</div>
-    </div>
-    <ng-template #noAcad><p>No academy assigned.</p></ng-template>
-  </section>
+        <mat-form-field appearance="outline" class="field col-3">
+          <mat-label>Age</mat-label>
+          <input matInput type="number" min="18" formControlName="age" />
+        </mat-form-field>
 
-  <mat-divider class="sep"></mat-divider>
+        <mat-form-field appearance="outline" class="field col-3">
+          <mat-label>Seniority</mat-label>
+          <mat-select formControlName="seniority">
+            <mat-option *ngFor="let s of seniorityOptions" [value]="s">{{
+              s
+            }}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-  <!-- MY SUBJECTS (by academy) -->
-  <section class="section">
-    <h3>My Subjects</h3>
-    <div *ngIf="mySubjects().length; else noSubjects">
-      <mat-list>
-        <mat-list-item *ngFor="let s of mySubjects()">
-          <div matListItemTitle>{{ s.name }}</div>
-          <div matListItemLine>
-            <ng-container *ngIf="s.numberOfClasses != null">
-              {{ s.numberOfClasses }} classes
-            </ng-container>
-            <ng-container *ngIf="s.difficulty"
-              >&nbsp;— {{ s.difficulty }}</ng-container
-            >
-          </div>
-        </mat-list-item>
-      </mat-list>
-    </div>
-    <ng-template #noSubjects>
-      <p>No subjects for your academy yet.</p>
-    </ng-template>
-  </section>
-
-  <mat-divider class="sep"></mat-divider>
-
-  <!-- GRADE A STUDENT -->
-  <section class="section">
-    <h3>Give Feedback to a Student</h3>
-
-    <form [formGroup]="gradeForm" (ngSubmit)="submitGrade()" class="form">
-      <!-- SUBJECT (required) -->
-      <mat-form-field appearance="outline">
-        <mat-label>Subject</mat-label>
-        <mat-select formControlName="subjectId" required>
-          <mat-option *ngFor="let s of mySubjects()" [value]="s.id">
-            {{ s.name }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <!-- STUDENT (populated only after subject is selected) -->
-      <mat-form-field appearance="outline">
-        <mat-label>Student</mat-label>
-        <mat-select
-          formControlName="studentId"
-          [disabled]="!gradeForm.get('subjectId')?.value"
-        >
-          <mat-option
-            *ngIf="!gradeForm.get('subjectId')?.value"
-            [disabled]="true"
+        <div class="actions col-12">
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            [disabled]="saving() || loading()"
           >
-            Select a subject first
-          </mat-option>
+            {{ saving() ? "Saving…" : "Save details" }}
+          </button>
+        </div>
+      </form>
+    </section>
 
-          <ng-container *ngIf="gradeForm.get('subjectId')?.value">
-            <mat-option *ngFor="let s of subjectStudents()" [value]="s.id">
-              {{ s.name }} — Academy #{{ s.academyId }}
-            </mat-option>
+    <mat-divider class="sep"></mat-divider>
+
+    <!-- ACADEMY -->
+    <section class="section">
+      <h3>My Academy</h3>
+      <div *ngIf="academy; else noAcad" class="academy">
+        <div>
+          <strong>{{ academy.name }}</strong>
+        </div>
+        <div>{{ academy.description }}</div>
+        <div>Start: {{ academy.startDate | date }}</div>
+        <div>End: {{ academy.endDate | date }}</div>
+        <div>Price: {{ academy.price | currency }}</div>
+      </div>
+      <ng-template #noAcad><p>No academy assigned.</p></ng-template>
+    </section>
+
+    <mat-divider class="sep"></mat-divider>
+
+    <!-- MY SUBJECTS (by academy) -->
+    <section class="section">
+      <h3>My Subjects</h3>
+      <div *ngIf="mySubjects().length; else noSubjects">
+        <mat-list>
+          <mat-list-item *ngFor="let s of mySubjects()">
+            <div matListItemTitle>{{ s.name }}</div>
+            <div matListItemLine>
+              <ng-container *ngIf="s.numberOfClasses != null">
+                {{ s.numberOfClasses }} classes
+              </ng-container>
+              <ng-container *ngIf="s.difficulty"
+                >&nbsp;— {{ s.difficulty }}</ng-container
+              >
+            </div>
+          </mat-list-item>
+        </mat-list>
+      </div>
+      <ng-template #noSubjects>
+        <p>No subjects for your academy yet.</p>
+      </ng-template>
+    </section>
+
+    <mat-divider class="sep"></mat-divider>
+
+    <!-- GIVE FEEDBACK TO A STUDENT -->
+    <section class="section">
+      <h3>Give Feedback to a Student</h3>
+
+      <form [formGroup]="gradeForm" (ngSubmit)="submitGrade()" class="form">
+        <mat-form-field appearance="outline" class="col-6">
+          <mat-label>Subject</mat-label>
+          <mat-select formControlName="subjectId" required>
+            <mat-option *ngFor="let s of mySubjects()" [value]="s.id">{{
+              s.name
+            }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-6">
+          <mat-label>Student</mat-label>
+          <mat-select
+            formControlName="studentId"
+            [disabled]="!gradeForm.get('subjectId')?.value"
+          >
             <mat-option
-              *ngIf="subjectStudents().length === 0"
+              *ngIf="!gradeForm.get('subjectId')?.value"
               [disabled]="true"
             >
-              No enrolled students for this subject.
+              Select a subject first
             </mat-option>
-          </ng-container>
-        </mat-select>
-      </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Grade (1–5)</mat-label>
-        <input matInput type="number" min="1" max="5" formControlName="grade" />
-      </mat-form-field>
+            <ng-container *ngIf="gradeForm.get('subjectId')?.value">
+              <mat-option *ngFor="let s of subjectStudents()" [value]="s.id">
+                {{ s.name }} — Academy #{{ s.academyId }}
+              </mat-option>
+              <mat-option
+                *ngIf="subjectStudents().length === 0"
+                [disabled]="true"
+              >
+                No enrolled students for this subject.
+              </mat-option>
+            </ng-container>
+          </mat-select>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>Comment</mat-label>
-        <textarea
-          matInput
-          rows="3"
-          formControlName="description"
-          placeholder="Optional note"
-        ></textarea>
-      </mat-form-field>
+        <mat-form-field appearance="outline" class="col-3">
+          <mat-label>Grade (1–5)</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            max="5"
+            formControlName="grade"
+          />
+        </mat-form-field>
 
-      <button
-        mat-flat-button
-        color="accent"
-        type="submit"
-        [disabled]="grading() || loading()"
-      >
-        {{ grading() ? "Submitting…" : "Submit feedback" }}
-      </button>
-    </form>
-  </section>
-</mat-card>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Comment</mat-label>
+          <textarea
+            matInput
+            rows="3"
+            formControlName="description"
+            placeholder="Optional note"
+          ></textarea>
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          color="accent"
+          type="submit"
+          [disabled]="grading() || loading()"
+        >
+          {{ grading() ? "Submitting…" : "Submit" }}
+        </button>
+      </form>
+    </section>
+  </mat-card>
+</div>

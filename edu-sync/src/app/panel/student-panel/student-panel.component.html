@@ -1,147 +1,133 @@
-<mat-card>
-  <h2>Student Panel</h2>
+<div class="page-center">
+  <mat-card class="panel">
+    <h2>Student Panel</h2>
 
-  <!-- DETAILS -->
-  <section class="section">
-    <h3>My Details</h3>
-    <form [formGroup]="detailForm" (ngSubmit)="saveDetails()" class="form">
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput formControlName="name" />
-      </mat-form-field>
+    <!-- DETAILS -->
+    <section class="details-wrap">
+      <h3 class="section-title">My Details</h3>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Address</mat-label>
-        <input matInput formControlName="address" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Telephone</mat-label>
-        <input matInput formControlName="telephone" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Date of birth</mat-label>
-        <input matInput [matDatepicker]="dp" formControlName="dateOfBirth" />
-        <mat-datepicker-toggle matSuffix [for]="dp"></mat-datepicker-toggle>
-        <mat-datepicker #dp></mat-datepicker>
-      </mat-form-field>
-
-      <button
-        mat-flat-button
-        color="primary"
-        type="submit"
-        [disabled]="saving() || loading()"
+      <form
+        [formGroup]="detailForm"
+        (ngSubmit)="saveDetails()"
+        class="details-form"
       >
-        {{ saving() ? "Saving…" : "Save details" }}
-      </button>
-    </form>
-  </section>
+        <mat-form-field appearance="outline" class="field col-6">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
 
-  <mat-divider class="sep"></mat-divider>
+        <mat-form-field appearance="outline" class="field col-6">
+          <mat-label>Address</mat-label>
+          <input matInput formControlName="address" />
+        </mat-form-field>
 
-  <!-- REVIEW A TRAINER (mirrors trainer-panel flow) -->
-  <section class="section">
-    <h3>Rate a Trainer</h3>
+        <mat-form-field appearance="outline" class="field col-4">
+          <mat-label>Telephone</mat-label>
+          <input matInput type="tel" formControlName="telephone" />
+        </mat-form-field>
 
-    <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="form">
-      <!-- SUBJECT (required) -->
-      <mat-form-field appearance="outline">
-        <mat-label>Subject</mat-label>
-        <mat-select formControlName="subjectId" required>
-          <mat-option *ngFor="let s of subjects" [value]="s.id">
-            {{ s.name }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+        <mat-form-field appearance="outline" class="field col-4">
+          <mat-label>Date of birth</mat-label>
+          <input matInput [matDatepicker]="dp" formControlName="dateOfBirth" />
+          <mat-datepicker-toggle matSuffix [for]="dp"></mat-datepicker-toggle>
+          <mat-datepicker #dp></mat-datepicker>
+        </mat-form-field>
 
-      <!-- TRAINER (populated only after subject is selected) -->
-      <mat-form-field appearance="outline">
-        <mat-label>Trainer</mat-label>
-        <mat-select
-          formControlName="trainerId"
-          [disabled]="!reviewForm.get('subjectId')?.value || trainerLoading()"
-        >
-          <!-- disabled state messages -->
-          <mat-option
-            *ngIf="!reviewForm.get('subjectId')?.value"
-            [disabled]="true"
+        <div class="actions col-12">
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            [disabled]="saving() || loading()"
           >
-            Select a subject first
-          </mat-option>
-
-          <mat-option *ngIf="trainerLoading()" [disabled]="true">
-            Loading…
-          </mat-option>
-
-          <!-- trainers for selected subject -->
-          <ng-container
-            *ngIf="reviewForm.get('subjectId')?.value && !trainerLoading()"
-          >
-            <mat-option *ngFor="let t of trainers" [value]="t.id">
-              {{ t.name }}
-            </mat-option>
-            <mat-option *ngIf="!trainers?.length" [disabled]="true">
-              No trainers for this subject.
-            </mat-option>
-          </ng-container>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Grade (1–5)</mat-label>
-        <input matInput type="number" min="1" max="5" formControlName="grade" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>Comment</mat-label>
-        <textarea
-          matInput
-          rows="3"
-          formControlName="description"
-          placeholder="Why this rating?"
-        ></textarea>
-      </mat-form-field>
-
-      <button
-        mat-flat-button
-        color="accent"
-        type="submit"
-        [disabled]="reviewing() || loading() || trainerLoading()"
-      >
-        {{ reviewing() ? "Submitting…" : "Submit review" }}
-      </button>
-    </form>
-  </section>
-
-  <mat-divider class="sep"></mat-divider>
-
-  <!-- ACADEMY & SUBJECTS -->
-  <section class="section">
-    <h3>My Academy</h3>
-    <div *ngIf="academy; else noAcad" class="academy">
-      <div class="row">
-        <div>
-          <strong>{{ academy.name }}</strong>
+            {{ saving() ? "Saving…" : "Save details" }}
+          </button>
         </div>
-        <div>{{ academy.description }}</div>
-        <div>Start: {{ academy.startDate | date }}</div>
-        <div>End: {{ academy.endDate | date }}</div>
-        <div>Price: {{ academy.price | currency }}</div>
-      </div>
+      </form>
+    </section>
 
-      <h4>Subjects</h4>
-      <mat-list>
-        <mat-list-item *ngFor="let s of subjects">
-          <div matListItemTitle>{{ s.name }}</div>
-          <div matListItemLine>
-            {{ s.numberOfClasses }} classes — {{ s.difficulty }}
+    <mat-divider class="sep"></mat-divider>
+
+    <!-- ACADEMY & SUBJECTS -->
+    <section class="section">
+      <h3>My Academy</h3>
+      <div *ngIf="academy; else noAcad" class="academy">
+        <div class="row">
+          <div>
+            <strong>{{ academy.name }}</strong>
           </div>
-        </mat-list-item>
-      </mat-list>
-    </div>
-    <ng-template #noAcad>
-      <p>No academy assigned.</p>
-    </ng-template>
-  </section>
-</mat-card>
+          <div>{{ academy.description }}</div>
+          <div>Start: {{ academy.startDate | date }}</div>
+          <div>End: {{ academy.endDate | date }}</div>
+          <div>Price: {{ academy.price | currency }}</div>
+        </div>
+
+        <h4>Subjects</h4>
+        <mat-list>
+          <mat-list-item *ngFor="let s of subjects">
+            <div matListItemTitle>{{ s.name }}</div>
+            <div matListItemLine>
+              {{ s.numberOfClasses }} classes — {{ s.difficulty }}
+            </div>
+          </mat-list-item>
+        </mat-list>
+      </div>
+      <ng-template #noAcad>
+        <p>No academy assigned.</p>
+      </ng-template>
+    </section>
+
+    <mat-divider class="sep"></mat-divider>
+
+    <!-- REVIEW A TRAINER -->
+    <section class="section">
+      <h3>Rate a Trainer</h3>
+
+      <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" class="form">
+        <mat-form-field appearance="outline" class="col-6">
+          <mat-label>Subject</mat-label>
+          <mat-select formControlName="subjectId" required>
+            <mat-option *ngFor="let s of subjects" [value]="s.id">{{
+              s.name
+            }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-6">
+          <mat-label>Trainer</mat-label>
+          <mat-select
+            formControlName="trainerId"
+            [disabled]="!reviewForm.get('subjectId')?.value || trainerLoading()"
+          >
+            <!-- options... -->
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-3">
+          <mat-label>Grade (1–5)</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            max="5"
+            formControlName="grade"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Comment</mat-label>
+          <textarea matInput rows="3" formControlName="description"></textarea>
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          color="accent"
+          type="submit"
+          [disabled]="reviewing() || loading() || trainerLoading()"
+        >
+          {{ reviewing() ? "Submitting…" : "Submit" }}
+        </button>
+      </form>
+    </section>
+  </mat-card>
+</div>

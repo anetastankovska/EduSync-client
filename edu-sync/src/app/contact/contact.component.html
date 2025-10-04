@@ -1,0 +1,98 @@
+<div class="contact-container">
+  <mat-card class="contact-card">
+    <h1>Contact Us</h1>
+
+    @if (!sent) {
+    <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" />
+        @if (contactForm.get('name')?.hasError('required')) {
+        <mat-error>Name is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" type="email" />
+        @if (contactForm.get('email')?.hasError('required')) {
+        <mat-error>Email is required</mat-error>
+        } @if (contactForm.get('email')?.hasError('email')) {
+        <mat-error>Enter a valid email</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Message</mat-label>
+        <textarea matInput formControlName="message" rows="5"></textarea>
+        @if (contactForm.get('message')?.hasError('required')) {
+        <mat-error>Message is required</mat-error>
+        }
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="contactForm.invalid"
+      >
+        Send Message
+      </button>
+    </form>
+    } @else {
+    <div class="success-message">
+      <h2>Thank you!</h2>
+      <p>Your message has been sent. We’ll get back to you soon.</p>
+      <button mat-stroked-button color="primary" (click)="resetForm()">
+        Send Another
+      </button>
+    </div>
+    }
+  </mat-card>
+
+  <mat-accordion class="institution-contacts" multi>
+    @for (c of contacts(); track c.title) {
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>{{ c.title }}</mat-panel-title>
+        <mat-panel-description>
+          @if (c.email) { {{ c.email }} } @if (!c.email && c.phone) {
+          {{ c.phone }} }
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      @if (c.orgName) {
+      <p>
+        <strong>{{ c.orgName }}</strong>
+      </p>
+      } @if (c.address?.line1 || c.address?.line2 || c.address?.city ||
+      c.address?.zip || c.address?.country) {
+      <p class="addr">
+        @if (c.address?.line1) { {{ c?.address?.line1 }}<br />
+        } @if (c.address?.line2 && !c.address?.city) { {{ c.address?.line2
+        }}<br />
+        } @if (c.address?.city || c.address?.zip) { {{ c.address?.city }}@if
+        (c.address?.zip) {, {{ c.address?.zip }} }<br />
+        } @if (c.address?.country) { {{ c.address?.country }} }
+      </p>
+      } @if (c.phone) {
+      <p>
+        <b>Phone:</b> <a [href]="telHref(c.phone)">{{ c.phone }}</a>
+      </p>
+      } @if (c.email) {
+      <p>
+        <b>Email:</b> <a [href]="'mailto:' + c.email">{{ c.email }}</a>
+      </p>
+      } @if (c.hours) {
+      <p class="hours">
+        <small>{{ c.hours }}</small>
+      </p>
+      }
+    </mat-expansion-panel>
+    }
+  </mat-accordion>
+</div>
+
+<script type="application/ld+json">
+  {{ structuredData() }}
+</script>

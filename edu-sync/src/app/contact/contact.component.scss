@@ -1,0 +1,70 @@
+:host {
+  /* Material 3 tokens (from your Azure theme) */
+  --surface: var(--md-sys-color-surface);
+  --surface-container: var(--md-sys-color-surface-container-low);
+  --on-surface: var(--md-sys-color-on-surface);
+  --on-surface-var: var(--md-sys-color-on-surface-variant);
+  --primary: var(--md-sys-color-primary);
+  --outline: var(--md-sys-color-outline);
+
+  --radius: 14px;
+  --gap: 20px;
+}
+
+/* Center everything and limit width */
+.contact-container {
+  max-width: 840px; /* <<< adjust to taste (720–960px works well) */
+  margin: 24px auto; /* centers on the page */
+  padding: 0 16px; /* small side padding for mobile */
+}
+
+/* Card */
+.contact-card {
+  background: var(--surface);
+  color: var(--on-surface);
+  margin-bottom: var(--gap);
+  padding: 20px;
+}
+
+/* Tidy big heading */
+.contact-card h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.6rem, 2.5vw + 1rem, 2.4rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+/* Form fields fill card width, but content stays compact due to container */
+.form-field {
+  width: 100%;
+  display: block;
+  margin-bottom: 14px;
+}
+.success-message {
+  text-align: center;
+  padding: 16px 8px;
+}
+
+/* Accordion keeps the same center width via the container */
+.institution-contacts {
+  border-radius: var(--radius);
+  background: var(--surface-container);
+  padding: 10px;
+}
+
+.institution-contacts .mat-expansion-panel {
+  background: var(--surface);
+  color: var(--on-surface);
+  border: 1px solid color-mix(in oklab, var(--outline) 70%, transparent);
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+}
+
+/* Optional: make the submit button align right */
+.contact-card form {
+  display: grid;
+  gap: 12px;
+}
+.contact-card form button[type="submit"] {
+  justify-self: end;
+}
