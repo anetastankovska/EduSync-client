@@ -81,34 +81,44 @@
 }
 
 /* Review/feedback form – 12-col grid like on Student page */
+/* Review/feedback form – SAME as student */
 .form {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 12px 16px;
+}
 
-  mat-form-field {
-    width: 100%;
-  }
-  .col-6 {
+.form mat-form-field {
+  width: 100%;
+  grid-column: span 4; /* 3 per row by default */
+}
+
+.form .col-4 {
+  grid-column: span 4;
+}
+.form .full {
+  grid-column: 1 / -1;
+}
+
+/* OPTIONAL: keep the submit button behavior identical to student.
+   If you want it right-aligned on desktop, you can add: */
+/*
+.form button[mat-flat-button] {
+  justify-self: end;
+}
+*/
+
+/* Tablet: 2 per row */
+@media (max-width: 900px) {
+  .form mat-form-field {
     grid-column: span 6;
-  } /* Subject, Student */
-  .col-3 {
-    grid-column: span 3;
-  } /* Grade (will be narrower) */
-  .full {
-    grid-column: 1 / -1;
-  } /* Comment full width */
+  }
+}
 
-  /* Make the submit button wide & aligned like Student page */
-  button[mat-flat-button] {
-    grid-column: 10 / -1; /* last 3 cols on desktop */
-    justify-self: end;
-    min-width: 220px;
-    height: 44px;
-    padding: 0 20px;
-    font-weight: 700;
-    border-radius: 999px;
-    white-space: nowrap;
+/* Phone: stack */
+@media (max-width: 600px) {
+  .form mat-form-field {
+    grid-column: span 12;
   }
 }
 
